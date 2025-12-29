@@ -1362,6 +1362,84 @@
             background: #4c51bf;
         }
 
+        /* 语音合成失败提示弹窗样式 */
+        .speech-error-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+        }
+
+        .speech-error-modal.active {
+            display: flex;
+        }
+
+        .speech-error-content {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 400px;
+            overflow: hidden;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .speech-error-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background-color: #f5f7fa;
+            border-bottom: 1px solid #e4e7eb;
+        }
+
+        .speech-error-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+
+        .speech-error-body {
+            padding: 24px 20px;
+            text-align: center;
+        }
+
+        .speech-error-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .speech-error-message {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .speech-error-hint {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+        }
+
         /* 语音方案相关样式 */
         .speech-scheme-container {
             display: flex;
@@ -5824,12 +5902,27 @@
 类、中类、小类、品类以至品种、花色、规格的过程。</div>
                 
                 <!-- 语音播放小弹窗 -->
-                <div id="voicePlayModal" class="voice-play-modal">
-                    <div class="voice-play-content">
-                        <span class="voice-icon">🔊</span>
-                        <span class="voice-text" id="voicePlayText">正在播放语音</span>
-                    </div>
+        <div id="voicePlayModal" class="voice-play-modal">
+            <div class="voice-play-content">
+                <span class="voice-icon">🔊</span>
+                <span class="voice-text" id="voicePlayText">正在播放语音</span>
+            </div>
+        </div>
+        
+        <!-- 语音合成失败提示弹窗 -->
+        <div id="speechErrorModal" class="speech-error-modal">
+            <div class="speech-error-content">
+                <div class="speech-error-header">
+                    <h3 class="speech-error-title">语音播放提示</h3>
+                    <button class="close-modal-btn" onclick="closeSpeechErrorModal()">×</button>
                 </div>
+                <div class="speech-error-body">
+                    <div class="speech-error-icon">⚠️</div>
+                    <p class="speech-error-message">语音合成服务暂时不可用，已自动切换至备选方案</p>
+                    <p class="speech-error-hint">您可以继续使用语音播放功能，系统已为您切换到预上传音频方案</p>
+                </div>
+            </div>
+        </div>
                 
                 <!-- 导航控制区域 -->
                 <div class="noun-navigation">
@@ -6013,7 +6106,11 @@
             speechScheme: 'A', // 默认使用A方案（浏览器合成语音）
             audioElements: {}, // 缓存音频元素
             nounAudioUrls: {
-                '商品分类': 'https://cfbed.1314883.xyz/file/1767010734042_商品分类.wav'
+                '商品分类': 'https://cfbed.1314883.xyz/file/1767010734042_商品分类.wav',
+                '商品包装标志': 'https://cfbed.1314883.xyz/file/1767013430122_商品包装标志.wav',
+                '商品小类': 'https://cfbed.1314883.xyz/file/1767017414150_商品小类.wav',
+                '仓库货架货位编码': 'https://cfbed.1314883.xyz/file/1767017956882_仓库货架货位编码.wav',
+                '品类群类编码': 'https://cfbed.1314883.xyz/file/1767018090732_品类群类编码.wav'
             }
         };
 
@@ -10390,6 +10487,27 @@
             }
         }
         
+        // 显示语音合成失败提示弹窗
+        function showSpeechErrorModal() {
+            const modal = document.getElementById('speechErrorModal');
+            if (modal) {
+                modal.classList.add('active');
+                
+                // 3秒后自动关闭弹窗
+                setTimeout(() => {
+                    closeSpeechErrorModal();
+                }, 3000);
+            }
+        }
+        
+        // 关闭语音合成失败提示弹窗
+        function closeSpeechErrorModal() {
+            const modal = document.getElementById('speechErrorModal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+        
         // 更新导航按钮状态和进度指示器
         function updateNavButtonsState() {
             const currentIndex = currentNavList.indexOf(currentNoun);
@@ -10483,6 +10601,7 @@
                     console.error('A方案语音合成不可用，自动切换到B方案');
                     // 自动切换到B方案
                     switchSpeechScheme('B');
+                    showSpeechErrorModal();
                     playSchemeB();
                     return;
                 }
@@ -10554,12 +10673,12 @@
                     // 清除localStorage中的语音状态
                     localStorage.removeItem('reciteSpeechState');
                     
-                    // 显示友好的错误提示
-                    showSpeechError(event.error);
-                    
                     // A方案失败，自动切换到B方案
                     console.error('A方案播放失败，自动切换到B方案');
                     switchSpeechScheme('B');
+                    
+                    // 显示语音合成失败提示弹窗
+                    showSpeechErrorModal();
                     
                     // 直接显示确认弹窗
                     document.getElementById('confirmTestModal').classList.add('active');
@@ -10599,11 +10718,13 @@
                             } catch (retryError) {
                                 console.error('重试A方案语音播放请求时仍出错:', retryError);
                                 isPlaying = false;
-                                showSpeechError('play-failed');
                                 
                                 // A方案重试失败，自动切换到B方案
                                 console.error('A方案重试失败，自动切换到B方案');
                                 switchSpeechScheme('B');
+                                
+                                // 显示语音合成失败提示弹窗
+                                showSpeechErrorModal();
                                 
                                 // 直接显示确认弹窗
                                 document.getElementById('confirmTestModal').classList.add('active');
@@ -10707,26 +10828,172 @@
                     errorMessage = '网络问题导致语音播放失败';
                     break;
                 case 'synthesis-unavailable':
-                    errorMessage = '语音合成服务不可用';
-                    break;
                 case 'synthesis-failed':
-                    errorMessage = '语音合成失败';
-                    break;
                 case 'language-unavailable':
-                    errorMessage = '不支持当前语言的语音合成';
-                    break;
                 case 'voice-unavailable':
-                    errorMessage = '没有可用的语音引擎';
-                    break;
                 case 'play-failed':
-                    errorMessage = '语音播放请求失败';
+                    // 优化：语音合成服务暂时不可用，已自动切换至备选方案
+                    errorMessage = '语音合成服务暂时不可用，已自动切换至备选方案';
                     break;
                 default:
                     errorMessage = '语音播放遇到未知问题';
             }
             
             console.error('语音错误:', errorMessage);
-            showToast(errorMessage);
+            
+            // 显示美观友好的弹窗提示
+            showSpeechErrorModal(errorMessage);
+        }
+        
+        // 显示语音合成错误弹窗
+        function showSpeechErrorModal(message) {
+            try {
+                // 检查是否已存在错误弹窗
+                let errorModal = document.getElementById('speechErrorModal');
+                if (errorModal) {
+                    return; // 避免重复显示
+                }
+                
+                // 创建错误弹窗
+                errorModal = document.createElement('div');
+                errorModal.id = 'speechErrorModal';
+                errorModal.className = 'speech-error-modal';
+                errorModal.innerHTML = `
+                    <div class="speech-error-content">
+                        <div class="speech-error-header">
+                            <h3>语音播放提示</h3>
+                            <button class="close-error-modal" onclick="closeSpeechErrorModal()">×</button>
+                        </div>
+                        <div class="speech-error-body">
+                            <p>${message}</p>
+                        </div>
+                        <div class="speech-error-footer">
+                            <button class="error-modal-btn" onclick="closeSpeechErrorModal()">知道了</button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(errorModal);
+                
+                // 添加CSS样式
+                const style = document.createElement('style');
+                style.textContent = `
+                    .speech-error-modal {
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background-color: rgba(0, 0, 0, 0.5);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        z-index: 2000;
+                    }
+                    
+                    .speech-error-content {
+                        background-color: white;
+                        border-radius: 12px;
+                        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                        width: 90%;
+                        max-width: 400px;
+                        overflow: hidden;
+                    }
+                    
+                    .speech-error-header {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding: 16px 20px;
+                        border-bottom: 1px solid #e0e0e0;
+                        background-color: #f5f7fa;
+                    }
+                    
+                    .speech-error-header h3 {
+                        margin: 0;
+                        font-size: 18px;
+                        color: #333;
+                    }
+                    
+                    .close-error-modal {
+                        background: none;
+                        border: none;
+                        font-size: 24px;
+                        cursor: pointer;
+                        color: #999;
+                        padding: 0;
+                        width: 30px;
+                        height: 30px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 50%;
+                        transition: all 0.3s ease;
+                    }
+                    
+                    .close-error-modal:hover {
+                        background-color: #e0e0e0;
+                        color: #333;
+                    }
+                    
+                    .speech-error-body {
+                        padding: 24px 20px;
+                        text-align: center;
+                    }
+                    
+                    .speech-error-body p {
+                        margin: 0;
+                        font-size: 16px;
+                        color: #555;
+                        line-height: 1.6;
+                    }
+                    
+                    .speech-error-footer {
+                        padding: 16px 20px;
+                        text-align: center;
+                        border-top: 1px solid #e0e0e0;
+                    }
+                    
+                    .error-modal-btn {
+                        padding: 10px 24px;
+                        background-color: #1976d2;
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        font-size: 14px;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                    }
+                    
+                    .error-modal-btn:hover {
+                        background-color: #1565c0;
+                        box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3);
+                    }
+                `;
+                
+                document.head.appendChild(style);
+                
+                // 自动关闭定时器（5秒后）
+                setTimeout(() => {
+                    closeSpeechErrorModal();
+                }, 5000);
+            } catch (error) {
+                console.error('显示语音错误弹窗时出错:', error);
+                // 兜底：使用原有的toast提示
+                showToast(message);
+            }
+        }
+        
+        // 关闭语音合成错误弹窗
+        function closeSpeechErrorModal() {
+            try {
+                const errorModal = document.getElementById('speechErrorModal');
+                if (errorModal) {
+                    errorModal.remove();
+                }
+            } catch (error) {
+                console.error('关闭语音错误弹窗时出错:', error);
+            }
         }
         
         // 播放B方案音频（预上传音频文件）
