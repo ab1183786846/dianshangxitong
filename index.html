@@ -8704,14 +8704,37 @@
         // 检测语音合成支持
         function checkSpeechSynthesisSupport() {
             try {
-                if ('speechSynthesis' in window) {
-                    AppState.speechSynthesisSupported = true;
-                    console.log('浏览器支持语音合成API');
-                } else {
+                // 1. 检测SpeechSynthesis接口是否存在
+                if (!('speechSynthesis' in window)) {
                     AppState.speechSynthesisSupported = false;
                     console.log('浏览器不支持语音合成API');
-                    // 显示音频激活按钮
                     showAudioActivationButton();
+                    return;
+                }
+                
+                // 2. 检测是否有可用的语音引擎
+                // 注意：需要在用户交互后才能获取到语音列表
+                const voices = window.speechSynthesis.getVoices();
+                if (voices.length > 0) {
+                    AppState.speechSynthesisSupported = true;
+                    console.log('浏览器支持语音合成API，检测到', voices.length, '种语音');
+                } else {
+                    // 有些浏览器需要等待voiceschanged事件才能获取到语音列表
+                    AppState.speechSynthesisSupported = 'pending';
+                    console.log('语音合成API存在，但暂时未检测到可用语音');
+                    
+                    // 监听语音列表加载事件
+                    window.speechSynthesis.onvoiceschanged = function() {
+                        const updatedVoices = window.speechSynthesis.getVoices();
+                        if (updatedVoices.length > 0) {
+                            AppState.speechSynthesisSupported = true;
+                            console.log('语音列表加载完成，检测到', updatedVoices.length, '种语音');
+                        } else {
+                            AppState.speechSynthesisSupported = false;
+                            console.log('语音列表加载完成，但没有可用语音');
+                            showAudioActivationButton();
+                        }
+                    };
                 }
             } catch (error) {
                 console.error('检测语音合成支持时出错:', error);
@@ -10174,60 +10197,161 @@
                 isPlaying = false;
             }
             
-            if ('speechSynthesis' in window) {
-                const utterance = new SpeechSynthesisUtterance(currentNounText);
-                utterance.lang = 'zh-CN';
-                utterance.rate = speechRate;
-                utterance.volume = 1.5; // 增大语音播放音量
-                
-                // 添加语音播放开始事件监听
-                utterance.onstart = function() {
-                    isPlaying = true;
-                    // 显示语音播放小弹窗
-                    document.getElementById('voicePlayModal').classList.add('active');
-                    // 保存语音状态到localStorage
-                    localStorage.setItem('reciteSpeechState', JSON.stringify({
-                        currentNoun: currentNoun,
-                        currentNounText: currentNounText,
-                        speechRate: speechRate,
-                        isPlaying: true,
-                        timestamp: Date.now()
-                    }));
-                };
-                
-                // 添加语音播放完成事件监听
-                utterance.onend = function() {
-                    isPlaying = false;
-                    // 隐藏语音播放小弹窗
-                    document.getElementById('voicePlayModal').classList.remove('active');
-                    // 清除localStorage中的语音状态
-                    localStorage.removeItem('reciteSpeechState');
-                    // 先关闭名词解释详情弹窗
-                    closeNounDetailModal();
-                    // 延迟显示确认进入答题界面弹窗，确保弹窗关闭动画完成
-                    setTimeout(function() {
+            // 1. 综合检测语音合成可用性
+            const isSpeechSupported = checkSpeechAvailability();
+            
+            if (isSpeechSupported) {
+                try {
+                    const utterance = new SpeechSynthesisUtterance(currentNounText);
+                    utterance.lang = 'zh-CN';
+                    utterance.rate = speechRate;
+                    utterance.volume = 1.5; // 增大语音播放音量
+                    
+                    // 2. 添加语音播放状态事件监听
+                    utterance.onstart = function() {
+                        isPlaying = true;
+                        // 显示语音播放小弹窗
+                        document.getElementById('voicePlayModal').classList.add('active');
+                        // 保存语音状态到localStorage
+                        localStorage.setItem('reciteSpeechState', JSON.stringify({
+                            currentNoun: currentNoun,
+                            currentNounText: currentNounText,
+                            speechRate: speechRate,
+                            isPlaying: true,
+                            timestamp: Date.now()
+                        }));
+                    };
+                    
+                    utterance.onend = function() {
+                        isPlaying = false;
+                        // 隐藏语音播放小弹窗
+                        document.getElementById('voicePlayModal').classList.remove('active');
+                        // 清除localStorage中的语音状态
+                        localStorage.removeItem('reciteSpeechState');
+                        // 先关闭名词解释详情弹窗
+                        closeNounDetailModal();
+                        // 延迟显示确认进入答题界面弹窗，确保弹窗关闭动画完成
+                        setTimeout(function() {
+                            document.getElementById('confirmTestModal').classList.add('active');
+                        }, 300); // 300ms延迟，匹配弹窗关闭动画时长
+                    };
+                    
+                    utterance.onerror = function(event) {
+                        isPlaying = false;
+                        console.error('语音播放错误:', event.error);
+                        // 隐藏语音播放小弹窗
+                        document.getElementById('voicePlayModal').classList.remove('active');
+                        // 清除localStorage中的语音状态
+                        localStorage.removeItem('reciteSpeechState');
+                        
+                        // 显示友好的错误提示
+                        showSpeechError(event.error);
+                        // 直接显示确认弹窗
                         document.getElementById('confirmTestModal').classList.add('active');
-                    }, 300); // 300ms延迟，匹配弹窗关闭动画时长
-                };
-                
-                // 添加语音播放错误事件监听
-                utterance.onerror = function(event) {
+                    };
+                    
+                    utterance.onpause = function() {
+                        isPlaying = false;
+                        console.log('语音播放已暂停');
+                    };
+                    
+                    utterance.onresume = function() {
+                        isPlaying = true;
+                        console.log('语音播放已恢复');
+                    };
+                    
+                    // 3. 确保语音合成API已准备就绪
+                    if (window.speechSynthesis.speaking) {
+                        window.speechSynthesis.cancel();
+                    }
+                    
+                    // 4. 尝试播放语音
+                    speechSynthesis.speak(utterance);
+                } catch (error) {
+                    console.error('创建或播放语音时出错:', error);
                     isPlaying = false;
-                    console.error('语音播放错误:', event.error);
-                    // 隐藏语音播放小弹窗
-                    document.getElementById('voicePlayModal').classList.remove('active');
+                    // 显示友好的错误提示
+                    showSpeechError('unknown');
+                    // 直接显示确认弹窗
+                    document.getElementById('confirmTestModal').classList.add('active');
                     // 清除localStorage中的语音状态
                     localStorage.removeItem('reciteSpeechState');
-                };
-                
-                speechSynthesis.speak(utterance);
+                }
             } else {
-                alert('您的浏览器不支持语音合成功能');
-                // 如果不支持语音合成，直接显示确认弹窗
+                // 5. 优雅降级：不支持语音合成时的处理
+                showSpeechNotSupported();
+                // 直接显示确认弹窗
                 document.getElementById('confirmTestModal').classList.add('active');
                 // 清除localStorage中的语音状态
                 localStorage.removeItem('reciteSpeechState');
             }
+        }
+        
+        // 检测语音合成可用性（综合检测）
+        function checkSpeechAvailability() {
+            try {
+                if (!('speechSynthesis' in window)) {
+                    return false;
+                }
+                
+                // 检查AppState中的支持状态
+                if (AppState.speechSynthesisSupported === false) {
+                    return false;
+                }
+                
+                // 检查speechSynthesis对象是否可用
+                const synth = window.speechSynthesis;
+                if (typeof synth.speak !== 'function') {
+                    return false;
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('检查语音可用性时出错:', error);
+                return false;
+            }
+        }
+        
+        // 显示语音合成不支持提示
+        function showSpeechNotSupported() {
+            // 避免使用alert，使用更友好的提示方式
+            console.log('您的浏览器不支持语音合成功能');
+            // 可以添加更友好的UI提示，例如在页面上显示一个提示条
+            showToast('当前浏览器不支持语音合成功能，将直接进入答题');
+        }
+        
+        // 显示语音播放错误提示
+        function showSpeechError(errorType) {
+            let errorMessage = '语音播放遇到问题';
+            
+            switch (errorType) {
+                case 'canceled':
+                    errorMessage = '语音播放已取消';
+                    break;
+                case 'interrupted':
+                    errorMessage = '语音播放被中断';
+                    break;
+                case 'network':
+                    errorMessage = '网络问题导致语音播放失败';
+                    break;
+                case 'synthesis-unavailable':
+                    errorMessage = '语音合成服务不可用';
+                    break;
+                case 'synthesis-failed':
+                    errorMessage = '语音合成失败';
+                    break;
+                case 'language-unavailable':
+                    errorMessage = '不支持当前语言的语音合成';
+                    break;
+                case 'voice-unavailable':
+                    errorMessage = '没有可用的语音引擎';
+                    break;
+                default:
+                    errorMessage = '语音播放遇到未知问题';
+            }
+            
+            console.error('语音错误:', errorMessage);
+            showToast(errorMessage);
         }
         
 
@@ -10248,15 +10372,29 @@
         
         // 从确认弹窗进入答题界面
         function startReciteTestFromConfirm() {
-            // 停止正在播放的语音
-            if ('speechSynthesis' in window) {
-                speechSynthesis.cancel();
-                isPlaying = false;
+            // 停止正在播放的语音（添加安全检查）
+            try {
+                if (typeof window.speechSynthesis !== 'undefined' && typeof window.speechSynthesis.cancel === 'function') {
+                    window.speechSynthesis.cancel();
+                    isPlaying = false;
+                }
+            } catch (error) {
+                console.error('停止语音播放时出错:', error);
             }
+            
             // 清除localStorage中的语音状态
             localStorage.removeItem('reciteSpeechState');
-            // 隐藏语音播放小弹窗
-            document.getElementById('voicePlayModal').classList.remove('active');
+            
+            // 隐藏语音播放小弹窗（添加存在性检查）
+            try {
+                const voiceModal = document.getElementById('voicePlayModal');
+                if (voiceModal) {
+                    voiceModal.classList.remove('active');
+                }
+            } catch (error) {
+                console.error('隐藏语音播放弹窗时出错:', error);
+            }
+            
             // 关闭确认弹窗和详情模态框
             closeConfirmTestModal();
             closeNounDetailModal();
@@ -10266,25 +10404,54 @@
         
         // 开始背书测试
         function startReciteTest() {
-            // 停止正在播放的语音
-            if ('speechSynthesis' in window) {
-                speechSynthesis.cancel();
-                isPlaying = false;
+            // 停止正在播放的语音（添加安全检查）
+            try {
+                if (typeof window.speechSynthesis !== 'undefined' && typeof window.speechSynthesis.cancel === 'function') {
+                    window.speechSynthesis.cancel();
+                    isPlaying = false;
+                }
+            } catch (error) {
+                console.error('停止语音播放时出错:', error);
             }
+            
             // 清除localStorage中的语音状态
             localStorage.removeItem('reciteSpeechState');
-            // 隐藏语音播放小弹窗
-            document.getElementById('voicePlayModal').classList.remove('active');
+            
+            // 隐藏语音播放小弹窗（添加存在性检查）
+            try {
+                const voiceModal = document.getElementById('voicePlayModal');
+                if (voiceModal) {
+                    voiceModal.classList.remove('active');
+                }
+            } catch (error) {
+                console.error('隐藏语音播放弹窗时出错:', error);
+            }
+            
             // 关闭详情模态框
             closeNounDetailModal();
             
-            // 更新测试模态框内容
-            document.getElementById('testQuestion').textContent = currentNoun;
-            document.getElementById('testScore').textContent = '0';
-            document.getElementById('matchStatus').innerHTML = '';
+            // 更新测试模态框内容（添加存在性检查）
+            try {
+                const questionElement = document.getElementById('testQuestion');
+                const scoreElement = document.getElementById('testScore');
+                const statusElement = document.getElementById('matchStatus');
+                
+                if (questionElement) questionElement.textContent = currentNoun;
+                if (scoreElement) scoreElement.textContent = '0';
+                if (statusElement) statusElement.innerHTML = '';
+            } catch (error) {
+                console.error('更新测试模态框内容时出错:', error);
+            }
             
-            // 显示测试模态框
-            document.getElementById('reciteTestModal').classList.add('active');
+            // 显示测试模态框（添加存在性检查）
+            try {
+                const testModal = document.getElementById('reciteTestModal');
+                if (testModal) {
+                    testModal.classList.add('active');
+                }
+            } catch (error) {
+                console.error('显示测试模态框时出错:', error);
+            }
             
             // 初始化语音识别
             initSpeechRecognition();
