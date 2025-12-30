@@ -1484,6 +1484,106 @@
             color: #1565c0;
         }
 
+        /* 语音播放状态弹窗样式 */
+        .voice-status-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+            padding: 15px;
+        }
+
+        .voice-status-modal.active {
+            display: flex;
+        }
+
+        .voice-status-content {
+            background: white;
+            border-radius: 18px;
+            padding: 25px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .voice-status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e4e7eb;
+        }
+
+        .voice-status-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+
+        .voice-status-body {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .voice-status-icon {
+            font-size: 56px;
+            margin-bottom: 20px;
+        }
+
+        .voice-status-message {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .voice-status-footer {
+            display: flex;
+            justify-content: center;
+        }
+
+        .voice-status-btn {
+            padding: 12px 30px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .voice-status-btn:hover {
+            background-color: #45a049;
+        }
+
+        .voice-status-btn:active {
+            transform: scale(0.95);
+        }
+
         /* 模态框样式 */
         .modal {
             position: fixed;
@@ -5144,25 +5244,65 @@
                                     </div>
                                     <div id="logistics4Items" class="noun-items" style="display: none;">
                                         <div class="noun-items-grid">
-                                            <div class="empty-state">
-                                                <div class="empty-state-icon">📦</div>
-                                                <div class="empty-state-text">正在上新中...</div>
+                                            <div class="noun-item" onclick="showNounDetail('人工摘取式拣货')">
+                                                <div class="noun-item-icon">👋</div>
+                                                <div class="noun-item-name">人工摘取式拣货</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('播种式DAS拣货')">
+                                                <div class="noun-item-icon">🌱</div>
+                                                <div class="noun-item-name">播种式DAS拣货</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('摘取式DPS拣货')">
+                                                <div class="noun-item-icon">🔍</div>
+                                                <div class="noun-item-name">摘取式DPS拣货</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('订单配货与校验出库')">
+                                                <div class="noun-item-icon">✅</div>
+                                                <div class="noun-item-name">订单配货与校验出库</div>
                                             </div>
                                         </div>
                                     </div>
                                     <div id="logistics5Items" class="noun-items" style="display: none;">
                                         <div class="noun-items-grid">
-                                            <div class="empty-state">
-                                                <div class="empty-state-icon">📦</div>
-                                                <div class="empty-state-text">正在上新中...</div>
+                                            <div class="noun-item" onclick="showNounDetail('现代商品包装')">
+                                                <div class="noun-item-icon">📦</div>
+                                                <div class="noun-item-name">现代商品包装</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('内包装')">
+                                                <div class="noun-item-icon">📦</div>
+                                                <div class="noun-item-name">内包装</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('外包装')">
+                                                <div class="noun-item-icon">📦</div>
+                                                <div class="noun-item-name">外包装</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('充气包装')">
+                                                <div class="noun-item-icon">💨</div>
+                                                <div class="noun-item-name">充气包装</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('包装标准')">
+                                                <div class="noun-item-icon">📋</div>
+                                                <div class="noun-item-name">包装标准</div>
                                             </div>
                                         </div>
                                     </div>
                                     <div id="logistics6Items" class="noun-items" style="display: none;">
                                         <div class="noun-items-grid">
-                                            <div class="empty-state">
-                                                <div class="empty-state-icon">📦</div>
-                                                <div class="empty-state-text">正在上新中...</div>
+                                            <div class="noun-item" onclick="showNounDetail('不良品')">
+                                                <div class="noun-item-icon">⚠️</div>
+                                                <div class="noun-item-name">不良品</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('待处理品')">
+                                                <div class="noun-item-icon">⏳</div>
+                                                <div class="noun-item-name">待处理品</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('废品')">
+                                                <div class="noun-item-icon">🗑️</div>
+                                                <div class="noun-item-name">废品</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('《退换货通知单》')">
+                                                <div class="noun-item-icon">📋</div>
+                                                <div class="noun-item-name">《退换货通知单》</div>
                                             </div>
                                         </div>
                                     </div>
@@ -5850,7 +5990,22 @@
             </div>
         </div>
         
-
+        <!-- 语音播放状态弹窗 -->
+        <div id="voiceStatusModal" class="voice-status-modal">
+            <div class="voice-status-content">
+                <div class="voice-status-header">
+                    <h3 class="voice-status-title">语音播放状态</h3>
+                    <button class="close-modal-btn" onclick="closeVoiceStatusModal()">×</button>
+                </div>
+                <div class="voice-status-body">
+                    <div class="voice-status-icon" id="voiceStatusIcon">🔊</div>
+                    <p class="voice-status-message" id="voiceStatusMessage">语音播放遇到未知问题</p>
+                    <div class="voice-status-footer">
+                        <button class="voice-status-btn" onclick="closeVoiceStatusModal()">确定</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         
         <!-- 确认进入答题界面弹窗 -->
         <div id="confirmTestModal" class="modal">
@@ -6027,7 +6182,20 @@
                 '盘点差异处理': 'https://cfbed.1314883.xyz/file/1767090719576_盘点差异处理.wav',
                 '密封': 'https://cfbed.1314883.xyz/file/1767090832527_密封.wav',
                 '商品养护': 'https://cfbed.1314883.xyz/file/1767090951681_商品养护.wav',
-                '干燥防霉腐': 'https://cfbed.1314883.xyz/file/1767091039635_干燥防霉腐.wav'
+                '干燥防霉腐': 'https://cfbed.1314883.xyz/file/1767091039635_干燥防霉腐.wav',
+                '人工摘取式拣货': 'https://cfbed.1314883.xyz/file/1767097625227_人工摘取式拣货.wav',
+                '播种式DAS拣货': 'https://cfbed.1314883.xyz/file/1767097684375_播种式DAS拣货.wav',
+                '摘取式DPS拣货': 'https://cfbed.1314883.xyz/file/1767097755833_摘取式DPS拣货.wav',
+                '订单配货与校验出库': 'https://cfbed.1314883.xyz/file/1767097811574_订单配货与校验出库.wav',
+                '现代商品包装': 'https://cfbed.1314883.xyz/file/1767100137050_现代商品包装.wav',
+                '内包装': 'https://cfbed.1314883.xyz/file/1767100229919_内包装.wav',
+                '外包装': 'https://cfbed.1314883.xyz/file/1767100330861_外包装.wav',
+                '充气包装': 'https://cfbed.1314883.xyz/file/1767100402767_充气包装.wav',
+                '包装标准': 'https://cfbed.1314883.xyz/file/1767100480040_包装标准.wav',
+                '不良品': 'https://cfbed.1314883.xyz/file/1767101880958_不良品.wav',
+                '待处理品': 'https://cfbed.1314883.xyz/file/1767102097542_待处理品.wav',
+                '废品': 'https://cfbed.1314883.xyz/file/1767102212785_废品.wav',
+                '《退换货通知单》': 'https://cfbed.1314883.xyz/file/1767102298596_《退换货通知单》.wav'
             }
         };
 
@@ -9325,6 +9493,9 @@
             // 固定显示10条名词解释
             const expectedTotalItems = 10;
             
+            // 动态更新当前导航列表
+            currentNavList = [];
+            
             if (isAll) {
                 // 选择全部按钮
                 document.querySelector(`[onclick="showNounItems('${tagName}', '${projectNum}')"]`).classList.add('active');
@@ -9358,6 +9529,11 @@
                             hasItems = true;
                             nounItems.forEach(item => {
                                 allNounItems.push(item.cloneNode(true));
+                                // 添加到导航列表
+                                const nounName = item.querySelector('.noun-item-name').textContent.trim();
+                                if (nounName && !currentNavList.includes(nounName)) {
+                                    currentNavList.push(nounName);
+                                }
                             });
                         }
                     }
@@ -9378,24 +9554,69 @@
                     // 动态收集所有物流项目中的名词解释
                     const allNounsMap = new Map();
                     
-                    // 首先收集所有项目中的名词项
-                    for (let i = 1; i <= 6; i++) {
-                        const projectItems = document.getElementById(`${tagName}${i}Items`);
-                        if (projectItems) {
-                            const nounItems = projectItems.querySelectorAll('.noun-item');
-                            nounItems.forEach(item => {
-                                const name = item.querySelector('.noun-item-name').textContent;
-                                const icon = item.querySelector('.noun-item-icon').textContent;
-                                // 只添加有名称和图标的项
-                                if (name && icon) {
-                                    allNounsMap.set(name, icon);
-                                }
-                            });
-                        }
+                    // 直接手动添加所有28个名词，确保数据完整
+                    const allLogisticsNouns = {
+                        '商品分类': '📦',
+                        '商品包装标志': '🏷️',
+                        '商品小类': '📋',
+                        '仓库货架货位编码': '📌',
+                        '品类群类编码': '🏷️',
+                        '货物检验': '🔍',
+                        '抽样检验': '📊',
+                        '物理鉴定法': '⚖️',
+                        '堆码': '📚',
+                        '货物上架作业': '⬆️',
+                        '化学药剂防霉腐': '🧪',
+                        '盘点差异处理': '📊',
+                        '密封': '🔒',
+                        '商品养护': '💚',
+                        '干燥防霉腐': '🌬️',
+                        '人工摘取式拣货': '👋',
+                        '播种式DAS拣货': '🌱',
+                        '摘取式DPS拣货': '🔍',
+                        '订单配货与校验出库': '✅',
+                        '现代商品包装': '📦',
+                        '内包装': '📦',
+                        '外包装': '📦',
+                        '充气包装': '💨',
+                        '包装标准': '📋',
+                        '不良品': '⚠️',
+                        '待处理品': '⏳',
+                        '废品': '🗑️',
+                        '《退换货通知单》': '📋'
+                    };
+                    
+                    // 将所有名词添加到Map中
+                    for (const [name, icon] of Object.entries(allLogisticsNouns)) {
+                        allNounsMap.set(name, icon);
                     }
                     
+                    // 调试信息：输出收集到的数据条数
+                    console.log('收集到的物流名词解释数量：', allNounsMap.size);
+                    
                     // 转换为数组并添加到网格容器
-                    allNounsMap.forEach((icon, name) => {
+                    // 清空currentNavList，准备重新生成
+                    currentNavList = [];
+                    
+                    // 将Map转换为数组，方便分页处理
+                    const allNounsArray = Array.from(allNounsMap);
+                    
+                    // 先更新分页状态，确保总条数正确，这是关键！
+                    paginationManager.updateState('recite', {
+                        totalItems: allNounsArray.length,
+                        itemsPerPage: 20 // 明确设置每页显示20条
+                    });
+                    
+                    // 重新获取更新后的分页状态
+                    const paginationState = paginationManager.getState('recite');
+                    
+                    // 计算当前页需要显示的数据范围
+                    const startIndex = (paginationState.currentPage - 1) * paginationState.itemsPerPage;
+                    const endIndex = startIndex + paginationState.itemsPerPage;
+                    const currentPageNouns = allNounsArray.slice(startIndex, endIndex);
+                    
+                    // 显示当前页的数据
+                    currentPageNouns.forEach(([name, icon]) => {
                         const nounItem = document.createElement('div');
                         nounItem.className = 'noun-item';
                         nounItem.onclick = () => showNounDetail(name);
@@ -9404,7 +9625,13 @@
                             <div class="noun-item-name">${name}</div>
                         `;
                         gridContainer.appendChild(nounItem);
+                        
+                        // 将名词名称添加到currentNavList，确保顺序一致
+                        currentNavList.push(name);
                     });
+                    
+                    // 更新分页控件
+                    paginationManager.updatePagination(targetItems, 'recite');
                     
                     // 如果没有任何名词项，显示空状态
                     if (gridContainer.children.length === 0) {
@@ -9415,6 +9642,8 @@
                                 <div class="empty-state-subtext">更多精彩的物流名词解释即将上线</div>
                             </div>
                         `;
+                        // 清空currentNavList
+                        currentNavList = [];
                     }
                 } else {
                     // 非物流分类显示空状态
@@ -9490,6 +9719,9 @@
                     targetItems.appendChild(gridContainer);
                 }
                 
+                // 清空当前导航列表
+                currentNavList = [];
+                
                 if (gridContainer.children.length === 0) {
                     // 根据不同分类生成个性化空状态
                     const emptyStates = {
@@ -9526,7 +9758,7 @@
                     };
                     
                     // 只有在物流分类下才创建默认物流内容
-                    if (tagName === 'logistics' && projectNum === 1 || projectNum === 2) {
+                    if (tagName === 'logistics' && (projectNum === 1 || projectNum === 2)) {
                         // 创建默认物流内容
                         const defaultNouns = [
                             { name: '商品分类', icon: '📦' },
@@ -9545,6 +9777,30 @@
                                 <div class="noun-item-name">${noun.name}</div>
                             `;
                             gridContainer.appendChild(nounItem);
+                            // 添加到当前导航列表
+                            currentNavList.push(noun.name);
+                        });
+                    } else if (tagName === 'logistics' && projectNum === 3) {
+                        // 创建项目3的默认物流内容
+                        const project3Nouns = [
+                            { name: '化学药剂防霉腐', icon: '🧪' },
+                            { name: '盘点差异处理', icon: '📊' },
+                            { name: '密封', icon: '🔒' },
+                            { name: '商品养护', icon: '💚' },
+                            { name: '干燥防霉腐', icon: '🌬️' }
+                        ];
+                        
+                        project3Nouns.forEach(noun => {
+                            const nounItem = document.createElement('div');
+                            nounItem.className = 'noun-item';
+                            nounItem.onclick = () => showNounDetail(noun.name);
+                            nounItem.innerHTML = `
+                                <div class="noun-item-icon">${noun.icon}</div>
+                                <div class="noun-item-name">${noun.name}</div>
+                            `;
+                            gridContainer.appendChild(nounItem);
+                            // 添加到当前导航列表
+                            currentNavList.push(noun.name);
                         });
                     } else {
                         // 生成个性化空状态
@@ -9558,6 +9814,15 @@
                         `;
                         gridContainer.appendChild(emptyStateDiv);
                     }
+                } else {
+                    // 如果已有内容，从现有内容中提取导航列表
+                    const existingNounItems = gridContainer.querySelectorAll('.noun-item');
+                    existingNounItems.forEach(item => {
+                        const nounName = item.querySelector('.noun-item-name').textContent.trim();
+                        if (nounName) {
+                            currentNavList.push(nounName);
+                        }
+                    });
                 }
             }
             
@@ -9779,7 +10044,7 @@
             // 初始化分页状态
             paginationManager.updateState('search', {
                 totalItems: results.length,
-                itemsPerPage: 5,
+                itemsPerPage: 20,
                 currentPage: 1
             });
             
@@ -10010,7 +10275,7 @@
         class PaginationManager {
             constructor() {
                 this.paginationStates = {};
-                this.defaultItemsPerPage = 10;
+                this.defaultItemsPerPage = 20;
             }
             
             // 获取或创建分页状态
@@ -10029,11 +10294,15 @@
             // 更新分页状态
             updateState(key, newState) {
                 const state = this.getState(key);
+                const effectiveTotalItems = newState.totalItems !== undefined ? newState.totalItems : state.totalItems;
+                const effectiveItemsPerPage = newState.itemsPerPage !== undefined ? newState.itemsPerPage : state.itemsPerPage;
+                const newTotalPages = effectiveTotalItems > 0 ? Math.ceil(effectiveTotalItems / effectiveItemsPerPage) : 1;
+                
                 this.paginationStates[key] = {
                     ...state,
                     ...newState,
-                    totalPages: newState.totalItems > 0 ? Math.ceil(newState.totalItems / (newState.itemsPerPage || state.itemsPerPage)) : 1,
-                    currentPage: Math.min(newState.currentPage || state.currentPage, Math.max(1, newState.totalItems > 0 ? Math.ceil(newState.totalItems / (newState.itemsPerPage || state.itemsPerPage)) : 1))
+                    totalPages: newTotalPages,
+                    currentPage: Math.min(newState.currentPage || state.currentPage, Math.max(1, newTotalPages))
                 };
             }
             
@@ -10165,15 +10434,10 @@
             // 当背书分页页码变化时，重新显示当前页内容
             const activeItems = document.querySelector('.noun-items.active');
             if (activeItems) {
-                // 获取当前激活的标签和子标签
-                const activeMainTab = document.querySelector('.tab.active');
-                const activeSubTab = document.querySelector('.sub-tab.active');
-                
-                if (activeMainTab && activeSubTab) {
-                    const mainTabName = activeMainTab.dataset.tab;
-                    const projectNum = activeSubTab.dataset.project;
-                    showNounItems(mainTabName, projectNum);
-                }
+                // 背书功能的标签结构特殊，直接使用物流分类和全部子标签
+                const mainTabName = 'logistics'; // 固定为物流分类
+                const projectNum = 'all'; // 固定为全部子标签
+                showNounItems(mainTabName, projectNum);
             }
         });
         
@@ -10224,17 +10488,11 @@
                 activeItems.style.display = 'block';
             }
             
-            // 计算当前项目中的实际名词数量
-            const nounItems = activeItems.querySelectorAll('.noun-item');
-            let actualItemCount = nounItems.length;
-            
-            // 使用实际的名词数量作为总条数，确保分页控件准确反映实际数据数量
-            const finalItemCount = actualItemCount;
-            
-            // 强制更新分页状态，确保总页数至少为1，统一设置为每页10条
+            // 对于物流分类，我们已经在showNounItems中正确设置了总条数
+            // 这里不再重新计算，直接使用已有的分页状态
+            // 只确保每页显示20条
             paginationManager.updateState('recite', {
-                totalItems: finalItemCount,
-                itemsPerPage: 10
+                itemsPerPage: 20
             });
             
             // 更新分页控件
@@ -10262,39 +10520,39 @@
             currentNoun = nounName;
             
             // 根据名词名称获取对应的解释文本
-            if (nounName === '商品分类') {
-                currentNounText = '商品分类：指为了一定目的，选择适当的分类标志，\n\n将商品集合总体科学地、系统地逐级划分为门类、大\n\n类、中类、小类、品类以至品种、花色、规格的过程。';
-            } else if (nounName === '商品包装标志') {
-                currentNounText = '商品包装标志:为了便于商品的流通、销售、选购和使用,在商品包装上通常都印有某种特定的文字或图形,用以表示商品的性能、储运注意事项、质量水平等含义,这些具有特定含义的图形和文字称为商品包装标志。商品包装标志分运输包装标志与销售包装标志。';
-            } else if (nounName === '商品小类') {
-                currentNounText = '商品小类:对中类商品的进一步划分,体现具体的商品名称。';
-            } else if (nounName === '仓库货架货位编码') {
-                currentNounText = '仓库货架货位编码:指将仓库范围的房、棚、场以及仓库的楼层、仓间、货架、走道等按地点、位置顺序编列号码,并做出明显标示,以便商品进出库可按号存取。';
-            } else if (nounName === '品类群类编码') {
-                currentNounText = '品类群类编码:把一些相关性强的商品经过集合后,分成几个品类群,再对每个品类群进行编号。';
-            } else if (nounName === '货物检验') {
-                currentNounText = '货物检验: 指利用工具或仪器,确定合适的检验项目,按照一定的方法,对照货物的标准检查、评价货物是否合乎规格及要求的过程。';
-            } else if (nounName === '抽样检验') {
-                currentNounText = '抽样检验: 按照事先规定的抽样方案,从被检批中抽取少量样品,组成样本,再对样本逐一进行测试,将测试结果与标准或合同进行比较,最后根据样本质量状况统计推断受检商品整体质量合格与否。';
-            } else if (nounName === '物理鉴定法') {
-                currentNounText = '物理鉴定法: 根据物理学原理,利用各种仪器或机械,通过对商品的物理性质及机械性质的鉴定,来确定商品的质量的方法。';
-            } else if (nounName === '堆码') {
-                currentNounText = '堆码: 也称码垛,是将存放的商品整齐、有规划地摆放成货垛的作业。即根据商品物品的包装外形、重量、数量、性能和特点等,结合仓库地坪负荷、储存时间,将商品分别堆成各种垛形。';
-            } else if (nounName === '货物上架作业') {
-                currentNounText = '货物上架作业: 进货人库的最后一个环节,是将要上架的货物搬运到存储区域,按照一定的上架原则及合适的方法将货品存放至指定储位。';
-            } else if (nounName === '化学药剂防霉腐') {
-                currentNounText = '化学药剂防霉腐: 将化学药剂喷洒在商品体和包装上，或喷洒在仓库内。';
-            } else if (nounName === '盘点差异处理') {
-                currentNounText = '盘点差异处理: 指在盘点结束以后,比较相同品名货物的账存数量与盘点数量之间的差异,如果差异率超过企业规定的范围,就必须对差异做出说明与原因分析,最后调整账务,做到账实相符。';
-            } else if (nounName === '密封') {
-                currentNounText = '密封: 利用一些不透气、能隔热防潮的材料,把商品严密地封闭起来,以隔绝空气,降低或减小空气温湿度对商品的影响。';
-            } else if (nounName === '商品养护') {
-                currentNounText = '商品养护: 商品在储运过程中所进行的保养和维护。从商品完成生产过程,进入消费领域之前,这一段过程的保养与维护都称为商品养护。';
-            } else if (nounName === '干燥防霉腐') {
-                currentNounText = '干燥防霉腐: 通过降低仓库环境中的水分和商品本身的水分,达到防霉腐的目的。';
-            } else {
-                currentNounText = `${nounName}：暂无详细解释`;
-            }
+            const nounExplanations = {
+                '商品分类': '商品分类：指为了一定目的，选择适当的分类标志，\n\n将商品集合总体科学地、系统地逐级划分为门类、大\n\n类、中类、小类、品类以至品种、花色、规格的过程。',
+                '商品包装标志': '商品包装标志:为了便于商品的流通、销售、选购和使用,在商品包装上通常都印有某种特定的文字或图形,用以表示商品的性能、储运注意事项、质量水平等含义,这些具有特定含义的图形和文字称为商品包装标志。商品包装标志分运输包装标志与销售包装标志。',
+                '商品小类': '商品小类:对中类商品的进一步划分,体现具体的商品名称。',
+                '仓库货架货位编码': '仓库货架货位编码:指将仓库范围的房、棚、场以及仓库的楼层、仓间、货架、走道等按地点、位置顺序编列号码,并做出明显标示,以便商品进出库可按号存取。',
+                '品类群类编码': '品类群类编码:把一些相关性强的商品经过集合后,分成几个品类群,再对每个品类群进行编号。',
+                '货物检验': '货物检验: 指利用工具或仪器,确定合适的检验项目,按照一定的方法,对照货物的标准检查、评价货物是否合乎规格及要求的过程。',
+                '抽样检验': '抽样检验: 按照事先规定的抽样方案,从被检批中抽取少量样品,组成样本,再对样本逐一进行测试,将测试结果与标准或合同进行比较,最后根据样本质量状况统计推断受检商品整体质量合格与否。',
+                '物理鉴定法': '物理鉴定法: 根据物理学原理,利用各种仪器或机械,通过对商品的物理性质及机械性质的鉴定,来确定商品的质量的方法。',
+                '堆码': '堆码: 也称码垛,是将存放的商品整齐、有规划地摆放成货垛的作业。即根据商品物品的包装外形、重量、数量、性能和特点等,结合仓库地坪负荷、储存时间,将商品分别堆成各种垛形。',
+                '货物上架作业': '货物上架作业: 进货人库的最后一个环节,是将要上架的货物搬运到存储区域,按照一定的上架原则及合适的方法将货品存放至指定储位。',
+                '化学药剂防霉腐': '化学药剂防霉腐: 将化学药剂喷洒在商品体和包装上，或喷洒在仓库内。',
+                '盘点差异处理': '盘点差异处理: 指在盘点结束以后,比较相同品名货物的账存数量与盘点数量之间的差异,如果差异率超过企业规定的范围,就必须对差异做出说明与原因分析,最后调整账务,做到账实相符。',
+                '密封': '密封: 利用一些不透气、能隔热防潮的材料,把商品严密地封闭起来,以隔绝空气,降低或减小空气温湿度对商品的影响。',
+                '商品养护': '商品养护: 商品在储运过程中所进行的保养和维护。从商品完成生产过程,进入消费领域之前,这一段过程的保养与维护都称为商品养护。',
+                '干燥防霉腐': '干燥防霉腐: 通过降低仓库环境中的水分和商品本身的水分,达到防霉腐的目的。',
+                '人工摘取式拣货': '人工摘取式拣货：针对每一张订单，由拣货员完全用人工方式根据订单上的货品信息到相应的存储位置将货品逐一挑出并集中的过程。',
+                '播种式DAS拣货': '播种式DAS拣货：DAS(播种式电子标签分拣系统)利用电子标签实现了播种式分货出库，每一储位的电子标签显示出该位置所需分货的数量，分拣员可根据这些信息进行快速分拣作业。',
+                '摘取式DPS拣货': '摘取式DPS拣货：在拣货操作区中的所有货架上，为每一种货物安装一个电子标签，拣货操作时只需根据电子标签所显示的数量即可轻松地完成商品拣货作业。',
+                '订单配货与校验出库': '订单配货与校验出库：指把拣取分类完成的货品进行校验，按客户订单进行配货，并完成货品的出库。',
+                '现代商品包装': '现代商品包装:指在流通过程中保护商品、方便储运、促进销售,按一定技术方法而采用的容器、材料及辅助物等的总称,也指为了达到上述目的而采用容器、材料和辅助物的过程中施加一定技术方法等的操作活动。',
+                '内包装': '内包装:也称为小包装或销售包装。这类包装与商品直接接触,通常作为商品的组成部分而随商品一起卖给消费者。',
+                '外包装': '外包装:也称为运输包装,或称为大包装。外包装可起到强化运输、保护商品以及便于储运的作用,是货物运输、保管等物流环节所要求的必要包装。',
+                '充气包装': '充气包装:采用二氧化碳气体或氮气等不活泼气体置换包装容器中空气的包装技术方法。',
+                '包装标准': '包装标准:围绕实际包装的科学化、合理化而制订的各类标准,是保证产品在流通过程中安全可靠、性能不变,而对包装材料、包装容器、包装方式所做的统一的技术规定。',
+                '不良品': '不良品:由卖家或物流等不同的责任方造成商品问题,影响其二次销售,但可返工或更换相关配件修复的商品。',
+                '待处理品': '待处理品:因客户少发或漏发退货商品或票据,或经检验责任方为客户所造成的无法正常退货的商品,此类商品一般先整理到待处理区。待商品票据补全后入库或退回客户。',
+                '废品': '废品:指因客户、物流或卖家原因造成的商品失去使用价值且无法修复或失去修复价值的商品。',
+                '《退换货通知单》': '《退换货通知单》:根据客户的退货要求,售后编制退货信息用以告知仓库进行业务对接、退货准备与核对等,在企业内部适用。'
+            };
+            
+            // 获取当前名词的解释文本
+            currentNounText = nounExplanations[nounName] || `${nounName}：暂无详细解释`;
             
             // 更新模态框内容
             document.getElementById('nounDetailTitle').textContent = nounName;
@@ -10406,6 +10664,35 @@
         
         // 更新导航按钮状态和进度指示器
         function updateNavButtonsState() {
+            // 确保currentNavList不为空
+            if (!currentNavList || currentNavList.length === 0) {
+                // 如果currentNavList为空，尝试从当前显示的名词项中获取
+                const activeItems = document.querySelector('.noun-items.active');
+                if (activeItems) {
+                    const nounItems = activeItems.querySelectorAll('.noun-item');
+                    currentNavList = Array.from(nounItems).map(item => {
+                        return item.querySelector('.noun-item-name').textContent.trim();
+                    }).filter(name => name);
+                }
+            }
+            
+            // 确保currentNoun存在于currentNavList中
+            if (!currentNoun || !currentNavList.includes(currentNoun)) {
+                // 如果currentNoun不存在于currentNavList中，尝试从页面中重新获取所有名词
+                const allNounItems = document.querySelectorAll('.noun-item');
+                const allNouns = Array.from(allNounItems).map(item => {
+                    return item.querySelector('.noun-item-name').textContent.trim();
+                }).filter(name => name);
+                
+                // 如果能找到当前名词，更新currentNavList
+                if (allNouns.includes(currentNoun)) {
+                    currentNavList = allNouns;
+                } else if (currentNavList.length === 0) {
+                    // 如果currentNavList仍为空，使用默认值
+                    currentNavList = [currentNoun];
+                }
+            }
+            
             const currentIndex = currentNavList.indexOf(currentNoun);
             const prevBtn = document.getElementById('prevNounBtn');
             const nextBtn = document.getElementById('nextNounBtn');
@@ -10417,7 +10704,17 @@
             
             // 更新进度指示器
             if (progressElement) {
-                progressElement.textContent = `${currentIndex + 1} / ${currentNavList.length}`;
+                const displayIndex = currentIndex >= 0 ? currentIndex + 1 : 1;
+                const totalLength = currentNavList.length > 0 ? currentNavList.length : 1;
+                progressElement.textContent = `${displayIndex} / ${totalLength}`;
+            }
+            
+            // 同时更新通过querySelector获取的进度元素
+            const queryProgressElement = document.querySelector('.noun-progress');
+            if (queryProgressElement) {
+                const displayIndex = currentIndex >= 0 ? currentIndex + 1 : 1;
+                const totalLength = currentNavList.length > 0 ? currentNavList.length : 1;
+                queryProgressElement.textContent = `${displayIndex} / ${totalLength}`;
             }
         }
         
@@ -10451,6 +10748,19 @@
         
         // 更新导航按钮状态
         function updateNavigationButtons() {
+            // 确保currentNoun存在于currentNavList中
+            if (!currentNavList.includes(currentNoun)) {
+                console.warn('当前名词不在导航列表中:', currentNoun);
+                // 尝试从页面中重新获取当前导航列表
+                const activeItems = document.querySelector('.noun-items.active');
+                if (activeItems) {
+                    const nounItems = activeItems.querySelectorAll('.noun-item');
+                    currentNavList = Array.from(nounItems).map(item => {
+                        return item.querySelector('.noun-item-name').textContent.trim();
+                    }).filter(name => name);
+                }
+            }
+            
             const currentIndex = currentNavList.indexOf(currentNoun);
             const prevBtn = document.getElementById('prevNounBtn');
             const nextBtn = document.getElementById('nextNounBtn');
@@ -10459,6 +10769,12 @@
             const progressElement = document.querySelector('.noun-progress');
             if (progressElement) {
                 progressElement.textContent = `${currentIndex + 1} / ${currentNavList.length}`;
+            }
+            
+            // 更新nounProgress元素
+            const nounProgressElement = document.getElementById('nounProgress');
+            if (nounProgressElement) {
+                nounProgressElement.textContent = `${currentIndex + 1} / ${currentNavList.length}`;
             }
         }
         
@@ -10706,56 +11022,97 @@
             showToast('当前浏览器不支持语音合成功能，将直接进入答题');
         }
         
+        // 显示语音播放状态弹窗
+        function showVoiceStatusModal(message, icon = '🔊') {
+            const modal = document.getElementById('voiceStatusModal');
+            const statusIcon = document.getElementById('voiceStatusIcon');
+            const statusMessage = document.getElementById('voiceStatusMessage');
+            
+            if (modal && statusIcon && statusMessage) {
+                statusIcon.textContent = icon;
+                statusMessage.textContent = message;
+                modal.classList.add('active');
+                
+                // 5秒后自动关闭弹窗
+                setTimeout(() => {
+                    closeVoiceStatusModal();
+                }, 5000);
+            }
+        }
+        
+        // 关闭语音播放状态弹窗
+        function closeVoiceStatusModal() {
+            const modal = document.getElementById('voiceStatusModal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+        
         // 显示语音播放错误提示
         function showSpeechError(errorType) {
             let errorMessage = '语音播放遇到问题';
+            let errorIcon = '⚠️';
             
             switch (errorType) {
                 case 'canceled':
                     errorMessage = '语音播放已取消';
+                    errorIcon = '🔊';
                     break;
                 case 'interrupted':
                     errorMessage = '语音播放被中断';
+                    errorIcon = '⚠️';
                     break;
                 case 'network':
                     errorMessage = '网络问题导致语音播放失败';
+                    errorIcon = '🌐';
                     break;
                 case 'synthesis-unavailable':
                     errorMessage = '语音合成服务不可用';
+                    errorIcon = '🔊';
                     break;
                 case 'synthesis-failed':
                     errorMessage = '语音合成失败';
+                    errorIcon = '🔊';
                     break;
                 case 'language-unavailable':
                     errorMessage = '不支持当前语言的语音合成';
+                    errorIcon = '🌐';
                     break;
                 case 'voice-unavailable':
                     errorMessage = '没有可用的语音引擎';
+                    errorIcon = '🔊';
                     break;
                 case 'play-failed':
                     errorMessage = '语音播放请求失败';
+                    errorIcon = '⚠️';
                     break;
                 case 'audio-unavailable':
                     errorMessage = '未找到音频文件';
+                    errorIcon = '📁';
                     break;
                 case 'unknown':
                     errorMessage = '语音播放遇到未知问题';
+                    errorIcon = '❓';
                     break;
                 default:
                     // 处理浏览器SpeechSynthesisUtterance事件返回的错误类型
                     if (errorType === 'network') {
                         errorMessage = '网络问题导致语音播放失败';
+                        errorIcon = '🌐';
                     } else if (errorType === 'not-allowed') {
                         errorMessage = '语音播放被浏览器阻止';
+                        errorIcon = '🚫';
                     } else if (errorType === 'service-not-available') {
                         errorMessage = '语音服务不可用';
+                        errorIcon = '🔊';
                     } else {
                         errorMessage = `语音播放遇到问题: ${errorType}`;
+                        errorIcon = '⚠️';
                     }
             }
             
             console.error('语音错误:', errorMessage);
-            showToast(errorMessage);
+            showVoiceStatusModal(errorMessage, errorIcon);
         }
         
         // 播放B方案音频（预上传音频文件）
@@ -10777,7 +11134,10 @@
                 
                 // 3. 获取或创建音频元素
                 let audioElement = AppState.audioElements[nounName];
+                let isNewAudioElement = false;
+                
                 if (!audioElement) {
+                    isNewAudioElement = true;
                     audioElement = new Audio(audioUrl);
                     audioElement.preload = 'auto';
                     AppState.audioElements[nounName] = audioElement;
@@ -10803,6 +11163,18 @@
                             if (voiceText) {
                                 voiceText.textContent = '正在播放语音';
                             }
+                        }
+                        
+                        // 如果是新创建的音频元素，加载完成后自动播放
+                        if (isNewAudioElement) {
+                            audioElement.play().catch(function(error) {
+                                console.error('播放B方案音频时出错:', error);
+                                isPlaying = false;
+                                showSpeechError('play-failed');
+                                // 直接显示确认弹窗
+                                document.getElementById('confirmTestModal').classList.add('active');
+                                localStorage.removeItem('reciteSpeechState');
+                            });
                         }
                     };
                 }
@@ -10876,17 +11248,21 @@
                     document.getElementById('confirmTestModal').classList.add('active');
                 };
                 
-                // 5. 播放音频
-                audioElement.play().then(() => {
-                    console.log('B方案音频播放已开始:', nounName);
-                }).catch(error => {
-                    console.error('B方案音频播放失败:', error);
-                    isPlaying = false;
-                    showSpeechError('play-failed');
-                    // 直接显示确认弹窗
-                    document.getElementById('confirmTestModal').classList.add('active');
-                    localStorage.removeItem('reciteSpeechState');
-                });
+                // 5. 播放音频（如果音频已加载完成）
+                if (!isNewAudioElement) {
+                    // 音频已预加载或缓存，直接播放
+                    audioElement.play().then(() => {
+                        console.log('B方案音频播放已开始:', nounName);
+                    }).catch(error => {
+                        console.error('B方案音频播放失败:', error);
+                        isPlaying = false;
+                        showSpeechError('play-failed');
+                        // 直接显示确认弹窗
+                        document.getElementById('confirmTestModal').classList.add('active');
+                        localStorage.removeItem('reciteSpeechState');
+                    });
+                }
+                // 如果是新创建的音频元素，会在oncanplaythrough事件中自动播放
             } catch (error) {
                 console.error('播放B方案音频时出错:', error);
                 isPlaying = false;
@@ -11064,6 +11440,76 @@
             }
         }
         
+        // 预加载音频资源
+        function preloadAudioResources() {
+            try {
+                // 预加载所有名词的音频资源
+                const nounsToPreload = Object.keys(AppState.nounAudioUrls);
+                
+                // 限制同时预加载的音频数量，避免网络阻塞
+                const maxConcurrentPreloads = 3;
+                let currentPreloadCount = 0;
+                let preloadIndex = 0;
+                
+                // 预加载函数
+                const loadNextAudio = () => {
+                    if (preloadIndex >= nounsToPreload.length) return;
+                    
+                    if (currentPreloadCount < maxConcurrentPreloads) {
+                        const nounName = nounsToPreload[preloadIndex++];
+                        const audioUrl = AppState.nounAudioUrls[nounName];
+                        
+                        if (audioUrl && !AppState.audioElements[nounName]) {
+                            currentPreloadCount++;
+                            
+                            // 创建音频元素但不播放
+                            const audioElement = new Audio(audioUrl);
+                            audioElement.preload = 'auto';
+                            
+                            // 预加载完成后缓存音频元素
+                            audioElement.oncanplaythrough = function() {
+                                AppState.audioElements[nounName] = audioElement;
+                                console.log('音频预加载完成:', nounName);
+                                currentPreloadCount--;
+                                loadNextAudio(); // 加载下一个音频
+                            };
+                            
+                            // 预加载失败时处理
+                            audioElement.onerror = function() {
+                                console.error('音频预加载失败:', nounName);
+                                currentPreloadCount--;
+                                loadNextAudio(); // 加载下一个音频
+                            };
+                            
+                            // 超时处理
+                            const timeoutId = setTimeout(() => {
+                                console.warn('音频预加载超时:', nounName);
+                                currentPreloadCount--;
+                                loadNextAudio(); // 加载下一个音频
+                            }, 10000); // 10秒超时
+                            
+                            audioElement.ontimeout = function() {
+                                clearTimeout(timeoutId);
+                                console.warn('音频加载超时:', nounName);
+                                currentPreloadCount--;
+                                loadNextAudio(); // 加载下一个音频
+                            };
+                            
+                            // 开始预加载
+                            audioElement.load();
+                        } else {
+                            loadNextAudio(); // 跳过已加载的音频
+                        }
+                    }
+                };
+                
+                // 启动预加载
+                loadNextAudio();
+            } catch (error) {
+                console.error('预加载音频资源时出错:', error);
+            }
+        }
+        
         // 初始化语音方案设置
         function initSpeechScheme() {
             try {
@@ -11075,6 +11521,9 @@
                 updateSpeechSchemeUI();
                 
                 console.log('语音方案初始化完成，当前方案:', savedScheme);
+                
+                // 预加载音频资源
+                preloadAudioResources();
             } catch (error) {
                 console.error('初始化语音方案时出错:', error);
                 // 出错时默认使用A方案
