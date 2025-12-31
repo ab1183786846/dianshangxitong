@@ -6095,7 +6095,7 @@
 
         <!-- 背景音乐 -->
         <audio id="bgMusic" loop>
-            <source src="https://audio.i226.cn/audio/%E5%B8%B8%E7%94%A8/%E8%AD%A6%E6%8A%A5%20(12).WAV" type="audio/wav">
+            <source src="http://audio.i226.cn/audio/%E5%B8%B8%E7%94%A8/%E8%AD%A6%E6%8A%A5%20(12).WAV" type="audio/wav">
             您的浏览器不支持音频播放。
         </audio>
     </div>
@@ -8964,25 +8964,11 @@
         // 播放背景音乐
         function playBackgroundMusic() {
             if (AppState.bgMusic && AppState.currentUser && AppState.currentUser.bgMusicEnabled !== false) {
-                // 尝试播放音乐，处理浏览器自动播放策略限制
                 AppState.bgMusic.play().catch(e => {
-                    console.log('音乐自动播放失败，需要用户交互:', e);
-                    // 这里可以添加用户交互提示，或者在用户点击页面时再次尝试播放
+                    console.log('音乐播放失败:', e);
                 });
             }
         }
-        
-        // 添加用户交互事件监听器，解决浏览器自动播放限制
-        document.addEventListener('click', function enableAudioContext() {
-            if (AppState.bgMusic && AppState.currentUser && AppState.currentUser.bgMusicEnabled !== false) {
-                // 尝试播放音乐，这将触发浏览器的用户交互检查
-                AppState.bgMusic.play().catch(e => {
-                    console.log('点击播放音乐失败:', e);
-                });
-            }
-            // 移除事件监听器，只在第一次点击时执行
-            document.removeEventListener('click', enableAudioContext);
-        });
 
         // 停止背景音乐
         function stopBackgroundMusic() {
