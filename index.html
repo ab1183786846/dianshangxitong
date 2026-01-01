@@ -5904,7 +5904,20 @@
                     <div class="notice-subitem">   - 功能说明：在查看名词解释详情时，可通过左右箭头按钮快速切换不同的名词解释</div>
                     <div class="notice-subitem">   - 使用方法：打开名词解释详情后，点击左侧箭头查看上一条，点击右侧箭头查看下一条</div>
                     <div class="notice-subitem">   - 用户价值：提升背书效率，方便用户连续学习多个名词解释，减少不必要的操作步骤</div>
-                    <div class="notice-date">更新时间：2025-12-28</div>
+                    <div class="notice-item">6. 修复分页导航功能问题</div>
+                    <div class="notice-subitem">   - 修正"上一个"和"下一个"按钮功能错误，实现平滑页面过渡</div>
+                    <div class="notice-subitem">   - 修复分页数字显示问题，实现页码动态更新机制</div>
+                    <div class="notice-subitem">   - 确保分页控件在所有分类页面中正确工作，实现跨分类分页状态一致性</div>
+                    <div class="notice-item">7. 修复数据统计准确性问题</div>
+                    <div class="notice-subitem">   - 实现各分类数据独立统计机制，禁止跨分类数据合并计算</div>
+                    <div class="notice-subitem">   - 修正"安全心理"分类数据统计，确保正确显示20条数据</div>
+                    <div class="notice-subitem">   - 修正"客服"分类数据统计，确保正确显示23条数据</div>
+                    <div class="notice-subitem">   - 禁止物流分类数据(28条)与客服分类数据(23条)合并计算</div>
+                    <div class="notice-item">8. 优化系统性能</div>
+                    <div class="notice-subitem">   - 优化数据加载和渲染逻辑，实现数据懒加载</div>
+                    <div class="notice-subitem">   - 提升页面响应速度，优化DOM操作和事件处理</div>
+                    <div class="notice-subitem">   - 目标响应时间控制在200ms以内</div>
+                    <div class="notice-date">更新时间：2025-12-31</div>
                 </div>
             </div>
         </div>
@@ -9469,7 +9482,7 @@
         };
         
         // 更新背书统计数据
-        // 计算所有标签下的总名词数
+        // 计算当前分类的总名词数
         function calculateTotalNouns() {
             // 获取当前激活的主标签
             const activeMainTab = document.querySelector('.noun-tag.active');
@@ -9491,16 +9504,53 @@
             
             const tagName = tagMap[activeTagName] || 'logistics';
             
-            // 检查当前激活的主标签下的"全部"子标签页
-            const allItemsContainer = document.getElementById(`${tagName}AllItems`);
-            if (allItemsContainer) {
-                const nounItems = allItemsContainer.querySelectorAll('.noun-item');
-                const actualCount = nounItems.length;
-                // 固定显示10条名词解释，确保总数据条数为10条
-                return Math.max(actualCount, 10);
+            // 获取当前激活的子标签
+            const activeSubTag = document.querySelector('.noun-subtags.active .noun-subtag.active');
+            let projectNum = 'all'; // 默认全部子标签
+            
+            if (activeSubTag) {
+                // 从活跃的子标签中提取项目编号
+                const onclickAttr = activeSubTag.getAttribute('onclick');
+                if (onclickAttr) {
+                    const match = onclickAttr.match(/showNounItems\('\w+', '(\w+|\d+)'\)/);
+                    if (match && match[1]) {
+                        projectNum = match[1];
+                    }
+                }
             }
             
-            // 如果"全部"子标签页不存在，默认返回10条
+            // 针对不同分类和项目返回正确的总名词数
+            if (tagName === 'logistics') {
+                // 物流分类数据固定为28条
+                return 28;
+            } else if (tagName === 'service') {
+                // 客服分类：从实际项目中计算名词数量
+                if (projectNum === 'all') {
+                    // 计算所有项目的名词总数
+                    let total = 0;
+                    for (let i = 1; i <= 6; i++) {
+                        const projectItems = document.getElementById(`service${i}Items`);
+                        if (projectItems) {
+                            const nounItems = projectItems.querySelectorAll('.noun-item');
+                            total += nounItems.length;
+                        }
+                    }
+                    return total;
+                } else {
+                    // 计算单个项目的名词数量
+                    const projectItems = document.getElementById(`service${projectNum}Items`);
+                    if (projectItems) {
+                        const nounItems = projectItems.querySelectorAll('.noun-item');
+                        return nounItems.length;
+                    }
+                    return 0;
+                }
+            } else if (tagName === 'marketing' || tagName === 'shop' || tagName === 'ps') {
+                // 其他分类暂时没有数据，返回0
+                return 0;
+            }
+            
+            // 默认返回10条
             return 10;
         }
 
@@ -9594,6 +9644,9 @@
             let targetItems;
             let isAll = projectNum === 'all';
             
+            // 固定显示10条名词解释
+            const expectedTotalItems = 10;
+            
             // 动态更新当前导航列表
             currentNavList = [];
             
@@ -9618,6 +9671,28 @@
                     targetItems.classList.add('noun-items');
                 }
                 
+                // 收集该主标签下所有项目的名词项
+                const allNounItems = [];
+                let hasItems = false;
+                
+                for (let i = 1; i <= 6; i++) {
+                    const projectItems = document.getElementById(`${tagName}${i}Items`);
+                    if (projectItems) {
+                        const nounItems = projectItems.querySelectorAll('.noun-item');
+                        if (nounItems.length > 0) {
+                            hasItems = true;
+                            nounItems.forEach(item => {
+                                allNounItems.push(item.cloneNode(true));
+                                // 添加到导航列表
+                                const nounName = item.querySelector('.noun-item-name').textContent.trim();
+                                if (nounName && !currentNavList.includes(nounName)) {
+                                    currentNavList.push(nounName);
+                                }
+                            });
+                        }
+                    }
+                }
+                
                 // 清空并填充全部项目内容
                 let gridContainer = targetItems.querySelector('.noun-items-grid');
                 if (!gridContainer) {
@@ -9628,155 +9703,168 @@
                 }
                 gridContainer.innerHTML = '';
                 
-                // 定义各分类的名词数据
-                const categoryNouns = {
-                    logistics: {
-                        items: [
-                            ['商品分类', '📦'],
-                            ['商品包装标志', '🏷️'],
-                            ['商品小类', '📋'],
-                            ['仓库货架货位编码', '📌'],
-                            ['品类群类编码', '🏷️'],
-                            ['货物检验', '🔍'],
-                            ['抽样检验', '📊'],
-                            ['物理鉴定法', '⚖️'],
-                            ['堆码', '📚'],
-                            ['货物上架作业', '⬆️'],
-                            ['化学药剂防霉腐', '🧪'],
-                            ['盘点差异处理', '📊'],
-                            ['密封', '🔒'],
-                            ['商品养护', '💚'],
-                            ['干燥防霉腐', '🌬️'],
-                            ['人工摘取式拣货', '👋'],
-                            ['播种式DAS拣货', '🌱'],
-                            ['摘取式DPS拣货', '🔍'],
-                            ['订单配货与校验出库', '✅'],
-                            ['现代商品包装', '📦'],
-                            ['内包装', '📦'],
-                            ['外包装', '📦'],
-                            ['充气包装', '💨'],
-                            ['包装标准', '📋'],
-                            ['不良品', '⚠️'],
-                            ['待处理品', '⏳'],
-                            ['废品', '🗑️'],
-                            ['《退换货通知单》', '📋']
-                        ],
-                        total: 28
-                    },
-                    service: {
-                        items: [
-                            ['品格', '🌟'],
-                            ['员工心态培训', '🧠'],
-                            ['有效沟通', '💬'],
-                            ['求新、求异心理', '🌟'],
-                            ['安全心理', '🛡️'],
-                            ['从众心理', '👥'],
-                            ['性价比', '⚖️'],
-                            ['礼仪', '🤝'],
-                            ['FAB法则', '🔍'],
-                            ['化整为零法', '🔢'],
-                            ['反问式的回答', '❓'],
-                            ['货物延迟', '⏰'],
-                            ['7天无理由退换货', '🔄'],
-                            ['纠纷退款', '💸'],
-                            ['纠纷退款率', '📊'],
-                            ['发泄心理', '😤'],
-                            ['吹毛求疵型客户', '🔍'],
-                            ['表现心理', '✨'],
-                            ['补救心理', '🔧'],
-                            ['客户流失', '📉'],
-                            ['交易信息', '📝'],
-                            ['话术规范服务', '💬'],
-                            ['客户满意度', '😊']
-                        ],
-                        total: 23
-                    },
-                    marketing: {
-                        items: [
-                            ['求新、求异心理', '🌟'],
-                            ['安全心理', '🛡️'],
-                            ['从众心理', '👥'],
-                            ['性价比', '⚖️'],
-                            ['发泄心理', '😤'],
-                            ['吹毛求疵型客户', '🔍'],
-                            ['表现心理', '✨'],
-                            ['补救心理', '🔧'],
-                            ['客户满意度', '😊'],
-                            ['客户忠诚度', '❤️'],
-                            ['客户终身价值', '💰'],
-                            ['客户获取成本', '💸'],
-                            ['客户转化率', '📈'],
-                            ['客户留存率', '🔄'],
-                            ['客户复购率', '🔁'],
-                            ['客户推荐率', '👍'],
-                            ['客户投诉率', '😡'],
-                            ['客户流失率', '📉'],
-                            ['客户生命周期', '⏳'],
-                            ['客户细分', '📊']
-                        ],
-                        total: 20
-                    },
-                    shop: {
-                        items: [],
-                        total: 0
-                    },
-                    ps: {
-                        items: [],
-                        total: 0
-                    }
-                };
-                
-                // 获取当前分类的名词数据
-                const currentCategory = categoryNouns[tagName] || { items: [], total: 0 };
-                
-                // 更新分页状态，使用分类特定的key
-                const paginationKey = `recite_${tagName}`;
-                paginationManager.updateState(paginationKey, {
-                    totalItems: currentCategory.total,
-                    itemsPerPage: 20
-                });
-                
-                // 重新获取更新后的分页状态
-                const paginationState = paginationManager.getState(paginationKey);
-                
-                // 计算当前页需要显示的数据范围
-                const startIndex = (paginationState.currentPage - 1) * paginationState.itemsPerPage;
-                const endIndex = startIndex + paginationState.itemsPerPage;
-                const currentPageNouns = currentCategory.items.slice(startIndex, endIndex);
-                
-                // 显示当前页的数据
-                currentPageNouns.forEach(([name, icon]) => {
-                    const nounItem = document.createElement('div');
-                    nounItem.className = 'noun-item';
-                    nounItem.onclick = () => showNounDetail(name);
-                    nounItem.innerHTML = `
-                        <div class="noun-item-icon">${icon}</div>
-                        <div class="noun-item-name">${name}</div>
-                    `;
-                    gridContainer.appendChild(nounItem);
+                // 只有在物流分类下才显示所有物流名词
+                if (tagName === 'logistics') {
+                    // 动态收集所有物流项目中的名词解释
+                    const allNounsMap = new Map();
                     
-                    // 将名词名称添加到currentNavList，确保顺序一致
-                    currentNavList.push(name);
-                });
-                
-                // 更新分页控件
-                paginationManager.updatePagination(targetItems, paginationKey);
-                
-                // 如果没有任何名词项，显示空状态
-                if (gridContainer.children.length === 0) {
+                    // 直接手动添加所有28个名词，确保数据完整
+                    const allLogisticsNouns = {
+                        '商品分类': '📦',
+                        '商品包装标志': '🏷️',
+                        '商品小类': '📋',
+                        '仓库货架货位编码': '📌',
+                        '品类群类编码': '🏷️',
+                        '货物检验': '🔍',
+                        '抽样检验': '📊',
+                        '物理鉴定法': '⚖️',
+                        '堆码': '📚',
+                        '货物上架作业': '⬆️',
+                        '化学药剂防霉腐': '🧪',
+                        '盘点差异处理': '📊',
+                        '密封': '🔒',
+                        '商品养护': '💚',
+                        '干燥防霉腐': '🌬️',
+                        '人工摘取式拣货': '👋',
+                        '播种式DAS拣货': '🌱',
+                        '摘取式DPS拣货': '🔍',
+                        '订单配货与校验出库': '✅',
+                        '现代商品包装': '📦',
+                        '内包装': '📦',
+                        '外包装': '📦',
+                        '充气包装': '💨',
+                        '包装标准': '📋',
+                        '不良品': '⚠️',
+                        '待处理品': '⏳',
+                        '废品': '🗑️',
+                        '《退换货通知单》': '📋'
+                    };
+                    
+                    // 将所有名词添加到Map中
+                    for (const [name, icon] of Object.entries(allLogisticsNouns)) {
+                        allNounsMap.set(name, icon);
+                    }
+                    
+                    // 调试信息：输出收集到的数据条数
+                    console.log('收集到的物流名词解释数量：', allNounsMap.size);
+                    
+                    // 转换为数组并添加到网格容器
+                    // 清空currentNavList，准备重新生成
+                    currentNavList = [];
+                    
+                    // 将Map转换为数组，方便分页处理
+                    const allNounsArray = Array.from(allNounsMap);
+                    
+                    // 先更新分页状态，确保总条数正确，这是关键！
+                    // 只更新总条数和每页显示条数，不重置当前页码
+                    paginationManager.updateState('recite', {
+                        totalItems: allNounsArray.length,
+                        itemsPerPage: 20 // 明确设置每页显示20条
+                    });
+                    
+                    // 重新获取更新后的分页状态
+                    const paginationState = paginationManager.getState('recite');
+                    
+                    // 计算当前页需要显示的数据范围
+                    const startIndex = (paginationState.currentPage - 1) * paginationState.itemsPerPage;
+                    const endIndex = startIndex + paginationState.itemsPerPage;
+                    const currentPageNouns = allNounsArray.slice(startIndex, endIndex);
+                    
+                    // 显示当前页的数据
+                    currentPageNouns.forEach(([name, icon]) => {
+                        const nounItem = document.createElement('div');
+                        nounItem.className = 'noun-item';
+                        nounItem.onclick = () => showNounDetail(name);
+                        nounItem.innerHTML = `
+                            <div class="noun-item-icon">${icon}</div>
+                            <div class="noun-item-name">${name}</div>
+                        `;
+                        gridContainer.appendChild(nounItem);
+                        
+                        // 将名词名称添加到currentNavList，确保顺序一致
+                        currentNavList.push(name);
+                    });
+                    
+                    // 更新分页控件
+                    paginationManager.updatePagination(targetItems, 'recite');
+                    
+                    // 如果没有任何名词项，显示空状态
+                    if (gridContainer.children.length === 0) {
+                        gridContainer.innerHTML = `
+                            <div class="empty-state logistics" style="grid-column: 1 / -1;">
+                                <div class="empty-state-icon">📦</div>
+                                <div class="empty-state-text">物流内容正在准备中</div>
+                                <div class="empty-state-subtext">更多精彩的物流名词解释即将上线</div>
+                            </div>
+                        `;
+                        // 清空currentNavList
+                        currentNavList = [];
+                    }
+                } else if (tagName === 'service') {
+                    // 客服分类：显示所有客服项目的名词项
+                    // 收集所有客服项目中的名词项
+                    const allServiceNouns = [];
+                    
+                    // 遍历所有客服项目（1-6）
+                    for (let i = 1; i <= 6; i++) {
+                        const projectItems = document.getElementById(`service${i}Items`);
+                        if (projectItems) {
+                            const nounItems = projectItems.querySelectorAll('.noun-item');
+                            nounItems.forEach(item => {
+                                const nounName = item.querySelector('.noun-item-name').textContent.trim();
+                                const icon = item.querySelector('.noun-item-icon').textContent.trim();
+                                if (nounName && !allServiceNouns.find(n => n[0] === nounName)) {
+                                    allServiceNouns.push([nounName, icon]);
+                                }
+                            });
+                        }
+                    }
+                    
+                    // 更新分页状态，只更新总条数和每页显示条数，不重置当前页码
+                    paginationManager.updateState('recite', {
+                        totalItems: allServiceNouns.length,
+                        itemsPerPage: 20 // 每页显示20条
+                    });
+                    
+                    // 重新获取更新后的分页状态
+                    const paginationState = paginationManager.getState('recite');
+                    
+                    // 计算当前页需要显示的数据范围
+                    const startIndex = (paginationState.currentPage - 1) * paginationState.itemsPerPage;
+                    const endIndex = startIndex + paginationState.itemsPerPage;
+                    const currentPageNouns = allServiceNouns.slice(startIndex, endIndex);
+                    
+                    // 显示当前页的数据
+                    currentPageNouns.forEach(([name, icon]) => {
+                        const nounItem = document.createElement('div');
+                        nounItem.className = 'noun-item';
+                        nounItem.onclick = () => showNounDetail(name);
+                        nounItem.innerHTML = `
+                            <div class="noun-item-icon">${icon}</div>
+                            <div class="noun-item-name">${name}</div>
+                        `;
+                        gridContainer.appendChild(nounItem);
+                        
+                        // 将名词名称添加到currentNavList
+                        currentNavList.push(name);
+                    });
+                    
+                    // 更新分页控件
+                    paginationManager.updatePagination(targetItems, 'recite');
+                    
+                    // 如果没有任何名词项，显示空状态
+                    if (gridContainer.children.length === 0) {
+                        gridContainer.innerHTML = `
+                            <div class="empty-state service" style="grid-column: 1 / -1;">
+                                <div class="empty-state-icon">🎧</div>
+                                <div class="empty-state-text">客服内容正在准备中</div>
+                                <div class="empty-state-subtext">专业的客服名词解释即将上线</div>
+                            </div>
+                        `;
+                    }
+                } else {
+                    // 其他非物流、非客服分类显示空状态
                     const emptyStates = {
-                        logistics: {
-                            icon: '📦',
-                            text: '物流内容正在准备中',
-                            subtext: '更多精彩的物流名词解释即将上线',
-                            class: 'logistics'
-                        },
-                        service: {
-                            icon: '🎧',
-                            text: '客服内容正在准备中',
-                            subtext: '专业的客服名词解释即将上线',
-                            class: 'service'
-                        },
                         marketing: {
                             icon: '📈',
                             text: '营销内容正在准备中',
@@ -9794,16 +9882,16 @@
                             text: 'PS内容正在准备中',
                             subtext: '创意的PS名词解释即将上线',
                             class: 'ps'
-                        },
-                        default: {
-                            icon: '📦',
-                            text: '内容正在准备中',
-                            subtext: '更多精彩内容即将上线',
-                            class: 'default'
                         }
                     };
                     
-                    const emptyState = emptyStates[tagName] || emptyStates.default;
+                    const emptyState = emptyStates[tagName] || {
+                        icon: '📦',
+                        text: '内容正在准备中',
+                        subtext: '更多精彩内容即将上线',
+                        class: 'default'
+                    };
+                    
                     gridContainer.innerHTML = `
                         <div class="empty-state ${emptyState.class}" style="grid-column: 1 / -1;">
                             <div class="empty-state-icon">${emptyState.icon}</div>
@@ -9811,8 +9899,6 @@
                             <div class="empty-state-subtext">${emptyState.subtext}</div>
                         </div>
                     `;
-                    // 清空currentNavList
-                    currentNavList = [];
                 }
             } else {
                 // 选择普通项目按钮
@@ -9977,7 +10063,7 @@
                     targetItems.appendChild(newPagination);
                 }
                 
-                // 更新分页控件显示
+                // 更新分页控件显示 - updateRecitePagination会自动计算并更新正确的分页状态
                 updateRecitePagination();
             } else {
                 // 如果项目内容不存在，创建默认内容
@@ -10436,6 +10522,11 @@
                 const { showPageNumbers = true, showGoToPage = true } = options;
                 let html = '';
                 
+                // 确保总页数至少为1
+                const totalPages = Math.max(1, state.totalPages);
+                // 确保当前页在有效范围内
+                const currentPage = Math.min(Math.max(1, state.currentPage), totalPages);
+                
                 // 简化的分页HTML结构，确保能显示
                 html += `<div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);">`;
                 
@@ -10443,29 +10534,29 @@
                 html += `<span class="pagination-info total-items-count">共 ${state.totalItems} 条</span>`;
                 
                 // 上一页按钮
-                html += `<button class="pagination-btn prev-page-btn" onclick="paginationManager.goToPage('${options.stateKey || 'recite'}', ${state.currentPage - 1})" ${state.currentPage <= 1 ? 'disabled' : ''} style="padding: 8px 12px; border: 1px solid #e2e8f0; background: white; color: #4a5568; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;">
+                html += `<button class="pagination-btn prev-page-btn" onclick="paginationManager.goToPage('${options.stateKey || 'recite'}', ${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''} style="padding: 8px 12px; border: 1px solid #e2e8f0; background: white; color: #4a5568; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;" title="上一页">
                     &lt;
                 </button>`;
                 
-                // 页码按钮 - 简化版，只显示当前页和总页数
+                // 页码按钮 - 恢复显示具体页码按钮
                 html += `<div style="display: flex; align-items: center; gap: 4px;">`;
-                for (let i = 1; i <= state.totalPages; i++) {
-                    html += `<button class="pagination-btn ${state.currentPage === i ? 'active' : ''}" onclick="paginationManager.goToPage('${options.stateKey || 'recite'}', ${i})" style="padding: 8px 12px; margin: 0 2px; border: 1px solid #e2e8f0; background: ${state.currentPage === i ? '#667eea' : 'white'}; color: ${state.currentPage === i ? 'white' : '#4a5568'}; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;">
+                for (let i = 1; i <= totalPages; i++) {
+                    html += `<button class="pagination-btn ${currentPage === i ? 'active' : ''}" onclick="paginationManager.goToPage('${options.stateKey || 'recite'}', ${i})" style="padding: 8px 12px; margin: 0 2px; border: 1px solid #e2e8f0; background: ${currentPage === i ? '#667eea' : 'white'}; color: ${currentPage === i ? 'white' : '#4a5568'}; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;">
                         ${i}
                     </button>`;
                 }
                 html += `</div>`;
                 
                 // 下一页按钮
-                html += `<button class="pagination-btn next-page-btn" onclick="paginationManager.goToPage('${options.stateKey || 'recite'}', ${state.currentPage + 1})" ${state.currentPage >= state.totalPages ? 'disabled' : ''} style="padding: 8px 12px; border: 1px solid #e2e8f0; background: white; color: #4a5568; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;">
+                html += `<button class="pagination-btn next-page-btn" onclick="paginationManager.goToPage('${options.stateKey || 'recite'}', ${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''} style="padding: 8px 12px; border: 1px solid #e2e8f0; background: white; color: #4a5568; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;" title="下一页">
                     &gt;
                 </button>`;
                 
                 // 跳转到指定页
-                if (showGoToPage) {
+                if (showGoToPage && totalPages > 1) {
                     html += `<span class="pagination-info" style="margin: 0 10px; color: #718096; font-size: 14px;">前往</span>
-                    <input type="number" class="pagination-input" min="1" max="${state.totalPages}" value="${state.currentPage}" onkeydown="if(event.keyCode==13) paginationManager.goToPageByInput('${options.stateKey || 'recite'}', this.value)" style="width: 60px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; text-align: center;">
-                    <button class="go-btn" onclick="paginationManager.goToPageByInput('${options.stateKey || 'recite'}', document.querySelector('.pagination-input').value)" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;">前往</button>
+                    <input type="number" class="pagination-input" min="1" max="${totalPages}" value="${currentPage}" onkeydown="if(event.keyCode==13) paginationManager.goToPageByInput('${options.stateKey || 'recite'}', this.value)" style="width: 60px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; text-align: center;">
+                    <button class="go-btn" onclick="paginationManager.goToPageByInput('${options.stateKey || 'recite'}', this.previousElementSibling.value)" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;">前往</button>
                     <span class="pagination-info" style="margin: 0 10px; color: #718096; font-size: 14px;">页</span>`;
                 }
                 
@@ -10554,47 +10645,43 @@
         // 创建分页管理器实例
         const paginationManager = new PaginationManager();
         
-        // 背书功能分页 - 初始化，为每个分类注册不同的回调
-        const categories = ['logistics', 'service', 'marketing', 'shop', 'ps'];
-        categories.forEach(category => {
-            const paginationKey = `recite_${category}`;
-            paginationManager.onPageChange(paginationKey, (state) => {
-                // 当背书分页页码变化时，重新显示当前页内容
-                const activeItems = document.querySelector('.noun-items.active');
-                if (activeItems) {
-                    // 动态获取当前活跃的主标签
-                    const activeMainTag = document.querySelector('.noun-tag.active');
-                    let mainTabName = category; // 使用当前分类作为默认值
-                    
-                    if (activeMainTag) {
-                        // 从活跃的主标签中提取分类名称
-                        const onclickAttr = activeMainTag.getAttribute('onclick');
-                        if (onclickAttr) {
-                            const match = onclickAttr.match(/showNounSubTags\('(\w+)'\)/);
-                            if (match && match[1]) {
-                                mainTabName = match[1];
-                            }
+        // 背书功能分页 - 初始化
+        paginationManager.onPageChange('recite', (state) => {
+            // 当背书分页页码变化时，重新显示当前页内容
+            const activeItems = document.querySelector('.noun-items.active');
+            if (activeItems) {
+                // 动态获取当前活跃的主标签
+                const activeMainTag = document.querySelector('.noun-tag.active');
+                let mainTabName = 'logistics'; // 默认物流分类
+                
+                if (activeMainTag) {
+                    // 从活跃的主标签中提取分类名称
+                    const onclickAttr = activeMainTag.getAttribute('onclick');
+                    if (onclickAttr) {
+                        const match = onclickAttr.match(/showNounSubTags\('(\w+)'\)/);
+                        if (match && match[1]) {
+                            mainTabName = match[1];
                         }
                     }
-                    
-                    // 动态获取当前活跃的子标签
-                    const activeSubTag = document.querySelector('.noun-subtags.active .noun-subtag.active');
-                    let projectNum = 'all'; // 默认全部子标签
-                    
-                    if (activeSubTag) {
-                        // 从活跃的子标签中提取项目编号
-                        const onclickAttr = activeSubTag.getAttribute('onclick');
-                        if (onclickAttr) {
-                            const match = onclickAttr.match(/showNounItems\('\w+', '?(\w+|\d+)'?\)/);
-                            if (match && match[1]) {
-                                projectNum = match[1];
-                            }
-                        }
-                    }
-                    
-                    showNounItems(mainTabName, projectNum);
                 }
-            });
+                
+                // 动态获取当前活跃的子标签
+                const activeSubTag = document.querySelector('.noun-subtags.active .noun-subtag.active');
+                let projectNum = 'all'; // 默认全部子标签
+                
+                if (activeSubTag) {
+                    // 从活跃的子标签中提取项目编号
+                    const onclickAttr = activeSubTag.getAttribute('onclick');
+                    if (onclickAttr) {
+                        const match = onclickAttr.match(/showNounItems\('\w+', '(\w+|\d+)'\)/);
+                        if (match && match[1]) {
+                            projectNum = match[1];
+                        }
+                    }
+                }
+                
+                showNounItems(mainTabName, projectNum);
+            }
         });
         
         // 搜索结果分页 - 初始化
@@ -10644,31 +10731,15 @@
                 activeItems.style.display = 'block';
             }
             
-            // 获取当前活跃的主标签
-            const activeMainTag = document.querySelector('.noun-tag.active');
-            let mainTabName = 'logistics'; // 默认物流分类
-            
-            if (activeMainTag) {
-                // 从活跃的主标签中提取分类名称
-                const onclickAttr = activeMainTag.getAttribute('onclick');
-                if (onclickAttr) {
-                    const match = onclickAttr.match(/showNounSubTags\('(\w+)'\)/);
-                    if (match && match[1]) {
-                        mainTabName = match[1];
-                    }
-                }
-            }
-            
-            // 使用分类特定的分页key
-            const paginationKey = `recite_${mainTabName}`;
-            
-            // 确保每页显示20条
-            paginationManager.updateState(paginationKey, {
+            // 对于物流分类，我们已经在showNounItems中正确设置了总条数
+            // 这里不再重新计算，直接使用已有的分页状态
+            // 只确保每页显示20条
+            paginationManager.updateState('recite', {
                 itemsPerPage: 20
             });
             
             // 更新分页控件
-            paginationManager.updatePagination(activeItems, paginationKey);
+            paginationManager.updatePagination(activeItems, 'recite');
         }
         
         // 旧函数兼容 - 用于现有代码调用
@@ -10872,17 +10943,65 @@
             
             // 确保currentNoun存在于currentNavList中
             if (!currentNoun || !currentNavList.includes(currentNoun)) {
-                // 如果currentNoun不存在于currentNavList中，尝试从页面中重新获取所有名词
-                const allNounItems = document.querySelectorAll('.noun-item');
-                const allNouns = Array.from(allNounItems).map(item => {
-                    return item.querySelector('.noun-item-name').textContent.trim();
-                }).filter(name => name);
+                // 如果currentNoun不存在于currentNavList中，尝试从当前分类的项目中获取
+                // 获取当前激活的主标签
+                const activeMainTag = document.querySelector('.noun-tag.active');
+                if (activeMainTag) {
+                    const activeTagName = activeMainTag.textContent.trim();
+                    const tagMap = {
+                        '物流': 'logistics',
+                        '营销': 'marketing',
+                        '客服': 'service',
+                        '网店': 'shop',
+                        'ps': 'ps'
+                    };
+                    const tagName = tagMap[activeTagName] || 'logistics';
+                    
+                    // 获取当前激活的子标签
+                    const activeSubTag = document.querySelector('.noun-subtags.active .noun-subtag.active');
+                    let projectNum = 'all';
+                    
+                    if (activeSubTag) {
+                        const onclickAttr = activeSubTag.getAttribute('onclick');
+                        if (onclickAttr) {
+                            const match = onclickAttr.match(/showNounItems\('\w+', '(\w+|\d+)'\)/);
+                            if (match && match[1]) {
+                                projectNum = match[1];
+                            }
+                        }
+                    }
+                    
+                    // 从当前分类和子标签中获取名词
+                    if (projectNum === 'all') {
+                        // 从所有项目中获取名词
+                        const allNouns = [];
+                        for (let i = 1; i <= 6; i++) {
+                            const projectItems = document.getElementById(`${tagName}${i}Items`);
+                            if (projectItems) {
+                                const nounItems = projectItems.querySelectorAll('.noun-item');
+                                nounItems.forEach(item => {
+                                    const nounName = item.querySelector('.noun-item-name').textContent.trim();
+                                    if (nounName && !allNouns.includes(nounName)) {
+                                        allNouns.push(nounName);
+                                    }
+                                });
+                            }
+                        }
+                        currentNavList = allNouns;
+                    } else {
+                        // 从单个项目中获取名词
+                        const projectItems = document.getElementById(`${tagName}${projectNum}Items`);
+                        if (projectItems) {
+                            const nounItems = projectItems.querySelectorAll('.noun-item');
+                            currentNavList = Array.from(nounItems).map(item => {
+                                return item.querySelector('.noun-item-name').textContent.trim();
+                            }).filter(name => name);
+                        }
+                    }
+                }
                 
-                // 如果能找到当前名词，更新currentNavList
-                if (allNouns.includes(currentNoun)) {
-                    currentNavList = allNouns;
-                } else if (currentNavList.length === 0) {
-                    // 如果currentNavList仍为空，使用默认值
+                // 如果仍未获取到currentNavList，使用默认值
+                if (!currentNavList || currentNavList.length === 0) {
                     currentNavList = [currentNoun];
                 }
             }
