@@ -9509,20 +9509,41 @@
             let projectNum = 'all'; // 默认全部子标签
             
             if (activeSubTag) {
-                // 从活跃的子标签中提取项目编号
+                // 从活跃的子标签中提取项目编号 - 修复正则表达式，支持数字参数不带引号
                 const onclickAttr = activeSubTag.getAttribute('onclick');
                 if (onclickAttr) {
-                    const match = onclickAttr.match(/showNounItems\('\w+', '(\w+|\d+)'\)/);
-                    if (match && match[1]) {
-                        projectNum = match[1];
+                    // 匹配带引号或不带引号的参数
+                    const match = onclickAttr.match(/showNounItems\('\w+',\s*(['"]?)(\w+|\d+)\1\)/);
+                    if (match && match[2]) {
+                        projectNum = match[2];
                     }
                 }
             }
             
+            // 获取当前实际显示的项目内容容器
+            let activeItems;
+            if (projectNum === 'all') {
+                // 如果是全部项目，获取allItems容器
+                activeItems = document.getElementById(`${tagName}AllItems`);
+            } else {
+                // 如果是单个项目，获取对应项目的容器
+                activeItems = document.getElementById(`${tagName}${projectNum}Items`);
+            }
+            
             // 针对不同分类和项目返回正确的总名词数
             if (tagName === 'logistics') {
-                // 物流分类数据固定为28条
-                return 28;
+                // 物流分类：根据项目编号返回正确的名词数量
+                if (projectNum === 'all') {
+                    // 物流分类全部项目数据固定为28条
+                    return 28;
+                } else {
+                    // 计算单个项目的名词数量
+                    if (activeItems) {
+                        const nounItems = activeItems.querySelectorAll('.noun-item');
+                        return nounItems.length;
+                    }
+                    return 0;
+                }
             } else if (tagName === 'service') {
                 // 客服分类：从实际项目中计算名词数量
                 if (projectNum === 'all') {
@@ -9538,9 +9559,8 @@
                     return total;
                 } else {
                     // 计算单个项目的名词数量
-                    const projectItems = document.getElementById(`service${projectNum}Items`);
-                    if (projectItems) {
-                        const nounItems = projectItems.querySelectorAll('.noun-item');
+                    if (activeItems) {
+                        const nounItems = activeItems.querySelectorAll('.noun-item');
                         return nounItems.length;
                     }
                     return 0;
@@ -9621,8 +9641,13 @@
             
             // 切换子标签内容
             const subTags = document.querySelectorAll('.noun-subtags');
-            subTags.forEach(subTag => subTag.style.display = 'none');
-            document.getElementById(`${tagName}SubTags`).style.display = 'flex';
+            subTags.forEach(subTag => {
+                subTag.style.display = 'none';
+                subTag.classList.remove('active');
+            });
+            const currentSubTags = document.getElementById(`${tagName}SubTags`);
+            currentSubTags.style.display = 'flex';
+            currentSubTags.classList.add('active');
             
             // 默认显示"全部"标签的内容
             showNounItems(tagName, 'all');
@@ -10088,6 +10113,25 @@
                 return;
             }
             
+            // 获取当前激活的模块（主标签）
+            const activeMainTag = document.querySelector('.noun-tag.active');
+            if (!activeMainTag) {
+                // 如果没有激活的主标签，不做任何操作
+                return;
+            }
+            
+            // 获取当前激活的主标签名称
+            const activeTagName = activeMainTag.textContent.trim().toLowerCase();
+            const tagMap = {
+                '物流': 'logistics',
+                '营销': 'marketing',
+                '客服': 'service',
+                '网店': 'shop',
+                'ps': 'ps'
+            };
+            
+            const currentModule = tagMap[activeTagName] || 'logistics';
+            
             // 构建完整的名词解释映射
             const nounExplanations = {
                 '商品分类': '商品分类：指为了一定目的，选择适当的分类标志，将商品集合总体科学地、系统地逐级划分为门类、大类、中类、小类、品类以至品种、花色、规格的过程。',
@@ -10107,28 +10151,52 @@
                 '干燥防霉腐': '干燥防霉腐: 通过降低仓库环境中的水分和商品本身的水分,达到防霉腐的目的。'
             };
             
-            // 动态获取页面上所有的名词项
-            const nounItems = document.querySelectorAll('.noun-item');
-            const allNouns = {};
+            // 只获取当前模块下的名词项，实现模块隔离
+            // 获取当前模块下所有项目的容器
+            const allNounItems = {};
             
-            // 遍历所有名词项，构建完整的名词库
-            nounItems.forEach(item => {
-                const onclickAttr = item.getAttribute('onclick');
-                if (onclickAttr && onclickAttr.startsWith('showNounDetail(')) {
-                    // 提取名词名称
-                    const nounName = onclickAttr.match(/showNounDetail\('([^']+)'\)/)[1];
-                    // 获取对应的解释
-                    const nounText = nounExplanations[nounName] || `${nounName}：暂无详细解释`;
-                    // 添加到名词库
-                    allNouns[nounName] = nounText;
+            // 遍历当前模块下的所有项目容器（1-6）
+            for (let i = 1; i <= 6; i++) {
+                const projectContainer = document.getElementById(`${currentModule}${i}Items`);
+                if (projectContainer) {
+                    // 获取当前项目容器中的所有名词项
+                    const nounItems = projectContainer.querySelectorAll('.noun-item');
+                    nounItems.forEach(item => {
+                        const onclickAttr = item.getAttribute('onclick');
+                        if (onclickAttr && onclickAttr.startsWith('showNounDetail(')) {
+                            // 提取名词名称
+                            const nounName = onclickAttr.match(/showNounDetail\('([^']+)'\)/)[1];
+                            // 获取对应的解释
+                            const nounText = nounExplanations[nounName] || `${nounName}：暂无详细解释`;
+                            // 添加到名词库
+                            allNounItems[nounName] = nounText;
+                        }
+                    });
                 }
-            });
+            }
+            
+            // 同时获取当前模块的"全部"项目容器
+            const allItemsContainer = document.getElementById(`${currentModule}AllItems`);
+            if (allItemsContainer) {
+                const nounItems = allItemsContainer.querySelectorAll('.noun-item');
+                nounItems.forEach(item => {
+                    const onclickAttr = item.getAttribute('onclick');
+                    if (onclickAttr && onclickAttr.startsWith('showNounDetail(')) {
+                        // 提取名词名称
+                        const nounName = onclickAttr.match(/showNounDetail\('([^']+)'\)/)[1];
+                        // 获取对应的解释
+                        const nounText = nounExplanations[nounName] || `${nounName}：暂无详细解释`;
+                        // 添加到名词库
+                        allNounItems[nounName] = nounText;
+                    }
+                });
+            }
             
             // 搜索结果数组
             const searchResults = [];
             
             // 遍历所有名词，进行模糊匹配
-            for (const [nounName, nounText] of Object.entries(allNouns)) {
+            for (const [nounName, nounText] of Object.entries(allNounItems)) {
                 // 合并名词名称和解释文本进行搜索
                 const searchContent = (nounName + nounText).toLowerCase();
                 const lowerNounName = nounName.toLowerCase();
@@ -10378,6 +10446,26 @@
                 return;
             }
             
+            // 获取当前激活的模块（主标签）
+            const activeMainTag = document.querySelector('.noun-tag.active');
+            if (!activeMainTag) {
+                // 如果没有激活的主标签，不做任何操作
+                suggestionsContainer.style.display = 'none';
+                return;
+            }
+            
+            // 获取当前激活的主标签名称
+            const activeTagName = activeMainTag.textContent.trim().toLowerCase();
+            const tagMap = {
+                '物流': 'logistics',
+                '营销': 'marketing',
+                '客服': 'service',
+                '网店': 'shop',
+                'ps': 'ps'
+            };
+            
+            const currentModule = tagMap[activeTagName] || 'logistics';
+            
             // 构建完整的名词解释映射
             const nounExplanations = {
                 '商品分类': '商品分类：指为了一定目的，选择适当的分类标志，将商品集合总体科学地、系统地逐级划分为门类、大类、中类、小类、品类以至品种、花色、规格的过程。',
@@ -10397,22 +10485,46 @@
                 '干燥防霉腐': '干燥防霉腐: 通过降低仓库环境中的水分和商品本身的水分,达到防霉腐的目的。'
             };
             
-            // 动态获取页面上所有的名词项
-            const nounItems = document.querySelectorAll('.noun-item');
+            // 只获取当前模块下的名词项，实现模块隔离
+            // 获取当前模块下所有项目的容器
             const allNouns = {};
             
-            // 遍历所有名词项，构建完整的名词库
-            nounItems.forEach(item => {
-                const onclickAttr = item.getAttribute('onclick');
-                if (onclickAttr && onclickAttr.startsWith('showNounDetail(')) {
-                    // 提取名词名称
-                    const nounName = onclickAttr.match(/showNounDetail\('([^']+)'\)/)[1];
-                    // 获取对应的解释
-                    const nounText = nounExplanations[nounName] || `${nounName}：暂无详细解释`;
-                    // 添加到名词库
-                    allNouns[nounName] = nounText;
+            // 遍历当前模块下的所有项目容器（1-6）
+            for (let i = 1; i <= 6; i++) {
+                const projectContainer = document.getElementById(`${currentModule}${i}Items`);
+                if (projectContainer) {
+                    // 获取当前项目容器中的所有名词项
+                    const nounItems = projectContainer.querySelectorAll('.noun-item');
+                    nounItems.forEach(item => {
+                        const onclickAttr = item.getAttribute('onclick');
+                        if (onclickAttr && onclickAttr.startsWith('showNounDetail(')) {
+                            // 提取名词名称
+                            const nounName = onclickAttr.match(/showNounDetail\('([^']+)'\)/)[1];
+                            // 获取对应的解释
+                            const nounText = nounExplanations[nounName] || `${nounName}：暂无详细解释`;
+                            // 添加到名词库
+                            allNouns[nounName] = nounText;
+                        }
+                    });
                 }
-            });
+            }
+            
+            // 同时获取当前模块的"全部"项目容器
+            const allItemsContainer = document.getElementById(`${currentModule}AllItems`);
+            if (allItemsContainer) {
+                const nounItems = allItemsContainer.querySelectorAll('.noun-item');
+                nounItems.forEach(item => {
+                    const onclickAttr = item.getAttribute('onclick');
+                    if (onclickAttr && onclickAttr.startsWith('showNounDetail(')) {
+                        // 提取名词名称
+                        const nounName = onclickAttr.match(/showNounDetail\('([^']+)'\)/)[1];
+                        // 获取对应的解释
+                        const nounText = nounExplanations[nounName] || `${nounName}：暂无详细解释`;
+                        // 添加到名词库
+                        allNouns[nounName] = nounText;
+                    }
+                });
+            }
             
             // 过滤出匹配的名词
             const filteredNouns = Object.entries(allNouns)
@@ -10530,29 +10642,43 @@
                 // 简化的分页HTML结构，确保能显示
                 html += `<div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);">`;
                 
-                // 总条数显示
+                // 总条数显示 - 使用当前实际显示的总条数
                 html += `<span class="pagination-info total-items-count">共 ${state.totalItems} 条</span>`;
                 
-                // 上一页按钮
-                html += `<button class="pagination-btn prev-page-btn" onclick="paginationManager.goToPage('${options.stateKey || 'recite'}', ${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''} style="padding: 8px 12px; border: 1px solid #e2e8f0; background: white; color: #4a5568; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;" title="上一页">
-                    &lt;
-                </button>`;
+                // 只有当总页数大于1时，才显示上一页和下一页按钮
+                if (totalPages > 1) {
+                    // 上一页按钮
+                    html += `<button class="pagination-btn prev-page-btn" onclick="paginationManager.goToPage('${options.stateKey || 'recite'}', ${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''} style="padding: 8px 12px; border: 1px solid #e2e8f0; background: white; color: #4a5568; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;" title="上一页">
+                        &lt;
+                    </button>`;
+                }
                 
                 // 页码按钮 - 恢复显示具体页码按钮
                 html += `<div style="display: flex; align-items: center; gap: 4px;">`;
                 for (let i = 1; i <= totalPages; i++) {
-                    html += `<button class="pagination-btn ${currentPage === i ? 'active' : ''}" onclick="paginationManager.goToPage('${options.stateKey || 'recite'}', ${i})" style="padding: 8px 12px; margin: 0 2px; border: 1px solid #e2e8f0; background: ${currentPage === i ? '#667eea' : 'white'}; color: ${currentPage === i ? 'white' : '#4a5568'}; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;">
+                    // 如果总页数为1，禁用点击事件，但保持激活样式
+                    const isDisabled = totalPages === 1;
+                    // 计算样式 - 当前页总是显示激活样式，不管是否禁用
+                    const bgColor = currentPage === i ? '#667eea' : 'white';
+                    const textColor = currentPage === i ? 'white' : '#4a5568';
+                    const cursor = isDisabled ? 'default' : 'pointer';
+                    const opacity = 1; // 保持完全不透明，即使禁用
+                    
+                    html += `<button class="pagination-btn ${currentPage === i ? 'active' : ''}" onclick="${isDisabled ? 'return false;' : `paginationManager.goToPage('${options.stateKey || 'recite'}', ${i})`}" ${isDisabled ? 'disabled' : ''} style="padding: 8px 12px; margin: 0 2px; border: 1px solid #e2e8f0; background: ${bgColor}; color: ${textColor}; border-radius: 6px; cursor: ${cursor}; opacity: ${opacity}; transition: all 0.2s ease;">
                         ${i}
                     </button>`;
                 }
                 html += `</div>`;
                 
-                // 下一页按钮
-                html += `<button class="pagination-btn next-page-btn" onclick="paginationManager.goToPage('${options.stateKey || 'recite'}', ${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''} style="padding: 8px 12px; border: 1px solid #e2e8f0; background: white; color: #4a5568; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;" title="下一页">
-                    &gt;
-                </button>`;
+                // 只有当总页数大于1时，才显示下一页按钮
+                if (totalPages > 1) {
+                    // 下一页按钮
+                    html += `<button class="pagination-btn next-page-btn" onclick="paginationManager.goToPage('${options.stateKey || 'recite'}', ${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''} style="padding: 8px 12px; border: 1px solid #e2e8f0; background: white; color: #4a5568; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;" title="下一页">
+                        &gt;
+                    </button>`;
+                }
                 
-                // 跳转到指定页
+                // 跳转到指定页 - 只有当总页数大于1时才显示
                 if (showGoToPage && totalPages > 1) {
                     html += `<span class="pagination-info" style="margin: 0 10px; color: #718096; font-size: 14px;">前往</span>
                     <input type="number" class="pagination-input" min="1" max="${totalPages}" value="${currentPage}" onkeydown="if(event.keyCode==13) paginationManager.goToPageByInput('${options.stateKey || 'recite'}', this.value)" style="width: 60px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; text-align: center;">
@@ -10692,26 +10818,10 @@
         
         // 更新背书功能分页控件
         function updateRecitePagination() {
-            // 查找激活的容器，优先使用class选择器
-            let activeItems = document.querySelector('.noun-items.active');
+            // 查找激活的容器
+            const activeItems = document.querySelector('.noun-items.active');
             
-            // 如果找不到，尝试查找所有具有noun-items类的元素，选择第一个可见的
-            if (!activeItems) {
-                const allNounItems = document.querySelectorAll('.noun-items');
-                for (let item of allNounItems) {
-                    if (item.style.display !== 'none') {
-                        activeItems = item;
-                        break;
-                    }
-                }
-            }
-            
-            // 如果还是找不到，尝试使用物流AllItems作为备选
-            if (!activeItems) {
-                activeItems = document.getElementById('logisticsAllItems');
-            }
-            
-            // 如果最终还是找不到，返回
+            // 如果找不到，返回
             if (!activeItems) {
                 return;
             }
@@ -10731,10 +10841,12 @@
                 activeItems.style.display = 'block';
             }
             
-            // 对于物流分类，我们已经在showNounItems中正确设置了总条数
-            // 这里不再重新计算，直接使用已有的分页状态
-            // 只确保每页显示20条
+            // 计算当前分类的总名词数
+            const totalNouns = calculateTotalNouns();
+            
+            // 更新分页状态
             paginationManager.updateState('recite', {
+                totalItems: totalNouns,
                 itemsPerPage: 20
             });
             
