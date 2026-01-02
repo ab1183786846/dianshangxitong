@@ -9034,6 +9034,7 @@
                     role: 2  // 特殊管理员权限级别为2
                 };
                 AppState.users.push(specialAdmin);
+                AppState.totalUsers = [...AppState.users];
                 saveUsers();
             }
         }
@@ -9520,58 +9521,29 @@
                 }
             }
             
-            // 获取当前实际显示的项目内容容器
-            let activeItems;
+            // 计算当前分类和项目的总名词数
+            let totalNouns = 0;
+            
             if (projectNum === 'all') {
-                // 如果是全部项目，获取allItems容器
-                activeItems = document.getElementById(`${tagName}AllItems`);
+                // 计算当前分类下所有项目的名词总数
+                for (let i = 1; i <= 6; i++) {
+                    const projectItems = document.getElementById(`${tagName}${i}Items`);
+                    if (projectItems) {
+                        const nounItems = projectItems.querySelectorAll('.noun-item');
+                        totalNouns += nounItems.length;
+                    }
+                }
             } else {
-                // 如果是单个项目，获取对应项目的容器
-                activeItems = document.getElementById(`${tagName}${projectNum}Items`);
+                // 计算当前分类下单个项目的名词数量
+                const projectItems = document.getElementById(`${tagName}${projectNum}Items`);
+                if (projectItems) {
+                    const nounItems = projectItems.querySelectorAll('.noun-item');
+                    totalNouns = nounItems.length;
+                }
             }
             
-            // 针对不同分类和项目返回正确的总名词数
-            if (tagName === 'logistics') {
-                // 物流分类：根据项目编号返回正确的名词数量
-                if (projectNum === 'all') {
-                    // 物流分类全部项目数据固定为28条
-                    return 28;
-                } else {
-                    // 计算单个项目的名词数量
-                    if (activeItems) {
-                        const nounItems = activeItems.querySelectorAll('.noun-item');
-                        return nounItems.length;
-                    }
-                    return 0;
-                }
-            } else if (tagName === 'service') {
-                // 客服分类：从实际项目中计算名词数量
-                if (projectNum === 'all') {
-                    // 计算所有项目的名词总数
-                    let total = 0;
-                    for (let i = 1; i <= 6; i++) {
-                        const projectItems = document.getElementById(`service${i}Items`);
-                        if (projectItems) {
-                            const nounItems = projectItems.querySelectorAll('.noun-item');
-                            total += nounItems.length;
-                        }
-                    }
-                    return total;
-                } else {
-                    // 计算单个项目的名词数量
-                    if (activeItems) {
-                        const nounItems = activeItems.querySelectorAll('.noun-item');
-                        return nounItems.length;
-                    }
-                    return 0;
-                }
-            } else if (tagName === 'marketing' || tagName === 'shop' || tagName === 'ps') {
-                // 其他分类暂时没有数据，返回0
-                return 0;
-            }
-            
-            // 默认返回10条
-            return 10;
+            // 确保返回值至少为1
+            return Math.max(1, totalNouns);
         }
 
         function updateReciteStats() {
@@ -11041,81 +11013,82 @@
         
         // 更新导航按钮状态和进度指示器
         function updateNavButtonsState() {
-            // 确保currentNavList不为空
-            if (!currentNavList || currentNavList.length === 0) {
-                // 如果currentNavList为空，尝试从当前显示的名词项中获取
-                const activeItems = document.querySelector('.noun-items.active');
-                if (activeItems) {
-                    const nounItems = activeItems.querySelectorAll('.noun-item');
-                    currentNavList = Array.from(nounItems).map(item => {
+            // 确保currentNoun存在
+            if (!currentNoun) {
+                return;
+            }
+            
+            // 获取当前激活的主标签
+            const activeMainTag = document.querySelector('.noun-tag.active');
+            if (!activeMainTag) {
+                return;
+            }
+            
+            // 获取当前激活的主标签名称
+            const activeTagName = activeMainTag.textContent.trim();
+            const tagMap = {
+                '物流': 'logistics',
+                '营销': 'marketing',
+                '客服': 'service',
+                '网店': 'shop',
+                'ps': 'ps'
+            };
+            const tagName = tagMap[activeTagName] || 'logistics';
+            
+            // 获取当前激活的子标签
+            const activeSubTag = document.querySelector('.noun-subtags.active .noun-subtag.active');
+            let projectNum = 'all';
+            
+            if (activeSubTag) {
+                const onclickAttr = activeSubTag.getAttribute('onclick');
+                if (onclickAttr) {
+                    // 匹配带引号或不带引号的参数
+                    const match = onclickAttr.match(/showNounItems\('\w+',\s*(['"]?)(\w+|\d+)\1\)/);
+                    if (match && match[2]) {
+                        projectNum = match[2];
+                    }
+                }
+            }
+            
+            // 从当前分类和子标签中获取名词 - 确保只包含当前分类下的名词
+            let allNouns = [];
+            
+            if (projectNum === 'all') {
+                // 从当前分类的所有项目中获取名词
+                for (let i = 1; i <= 6; i++) {
+                    const projectItems = document.getElementById(`${tagName}${i}Items`);
+                    if (projectItems) {
+                        const nounItems = projectItems.querySelectorAll('.noun-item');
+                        nounItems.forEach(item => {
+                            const nounName = item.querySelector('.noun-item-name').textContent.trim();
+                            if (nounName && !allNouns.includes(nounName)) {
+                                allNouns.push(nounName);
+                            }
+                        });
+                    }
+                }
+            } else {
+                // 从当前分类的单个项目中获取名词
+                const projectItems = document.getElementById(`${tagName}${projectNum}Items`);
+                if (projectItems) {
+                    const nounItems = projectItems.querySelectorAll('.noun-item');
+                    allNouns = Array.from(nounItems).map(item => {
                         return item.querySelector('.noun-item-name').textContent.trim();
                     }).filter(name => name);
                 }
             }
             
-            // 确保currentNoun存在于currentNavList中
-            if (!currentNoun || !currentNavList.includes(currentNoun)) {
-                // 如果currentNoun不存在于currentNavList中，尝试从当前分类的项目中获取
-                // 获取当前激活的主标签
-                const activeMainTag = document.querySelector('.noun-tag.active');
-                if (activeMainTag) {
-                    const activeTagName = activeMainTag.textContent.trim();
-                    const tagMap = {
-                        '物流': 'logistics',
-                        '营销': 'marketing',
-                        '客服': 'service',
-                        '网店': 'shop',
-                        'ps': 'ps'
-                    };
-                    const tagName = tagMap[activeTagName] || 'logistics';
-                    
-                    // 获取当前激活的子标签
-                    const activeSubTag = document.querySelector('.noun-subtags.active .noun-subtag.active');
-                    let projectNum = 'all';
-                    
-                    if (activeSubTag) {
-                        const onclickAttr = activeSubTag.getAttribute('onclick');
-                        if (onclickAttr) {
-                            const match = onclickAttr.match(/showNounItems\('\w+', '(\w+|\d+)'\)/);
-                            if (match && match[1]) {
-                                projectNum = match[1];
-                            }
-                        }
-                    }
-                    
-                    // 从当前分类和子标签中获取名词
-                    if (projectNum === 'all') {
-                        // 从所有项目中获取名词
-                        const allNouns = [];
-                        for (let i = 1; i <= 6; i++) {
-                            const projectItems = document.getElementById(`${tagName}${i}Items`);
-                            if (projectItems) {
-                                const nounItems = projectItems.querySelectorAll('.noun-item');
-                                nounItems.forEach(item => {
-                                    const nounName = item.querySelector('.noun-item-name').textContent.trim();
-                                    if (nounName && !allNouns.includes(nounName)) {
-                                        allNouns.push(nounName);
-                                    }
-                                });
-                            }
-                        }
-                        currentNavList = allNouns;
-                    } else {
-                        // 从单个项目中获取名词
-                        const projectItems = document.getElementById(`${tagName}${projectNum}Items`);
-                        if (projectItems) {
-                            const nounItems = projectItems.querySelectorAll('.noun-item');
-                            currentNavList = Array.from(nounItems).map(item => {
-                                return item.querySelector('.noun-item-name').textContent.trim();
-                            }).filter(name => name);
-                        }
-                    }
-                }
-                
-                // 如果仍未获取到currentNavList，使用默认值
-                if (!currentNavList || currentNavList.length === 0) {
-                    currentNavList = [currentNoun];
-                }
+            // 确保currentNavList只包含当前分类下的名词
+            currentNavList = allNouns;
+            
+            // 如果currentNavList为空，添加当前名词
+            if (currentNavList.length === 0) {
+                currentNavList = [currentNoun];
+            }
+            
+            // 如果currentNoun不在currentNavList中，添加它
+            if (!currentNavList.includes(currentNoun)) {
+                currentNavList.push(currentNoun);
             }
             
             const currentIndex = currentNavList.indexOf(currentNoun);

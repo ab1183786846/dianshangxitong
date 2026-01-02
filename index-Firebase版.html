@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电商试卷系统（测试版10）-Firebase版</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+    <style>
+        /* 保留原有CSS样式 */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        /* 其他原有样式... */
+    </style>
+</head>
+<body>
+    <!-- 保留原有HTML结构 -->
+    <div id="app">
+        <!-- 原有HTML内容... -->
+    </div>
+
+    <script>
+        // Firebase配置
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // 初始化Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // 全局状态管理
+        const AppState = {
+            currentPage: 'auth',
+            authMode: 'login',
+            currentUser: null,
+            users: [],
+            questions: [],
+            currentQuestion: 0,
+            userAnswers: [],
+            isAnswered: [],
+            soundEnabled: true,
+            autoNextEnabled: false,
+            historyRecords: [],
+            wrongAnswers: [],
+            audioContext: null,
+            policeLightEnabled: true,
+            policeLightPassword: '119120',
+            adminPassword: '19560387349',
+            specialAdminAccount: '19560394667',
+            specialAdminPassword: '123456',
+            isSpecialAdmin: false,
+            userToDelete: null,
+            bgMusic: null,
+            currentPageIndex: 1,
+            itemsPerPage: 5,
+            totalUsers: [],
+            // 背书功能分页状态
+            reciteCurrentPage: 1,
+            reciteItemsPerPage: 5,
+            reciteTotalItems: 0,
+            reciteTotalPages: 1,
+            // 保存登录信息
+            savedCredentials: {
+                account: '',
+                password: '',
+                rememberMe: false
+            },
+            // 新增：随机练习密码验证状态
+            randomPasswordAttempts: 0,
+            // 新增：设置相关状态
+            isSpecialVersion: false,
+            soundType: 'correct',
+            correctSound: null,
+            incorrectSound: null,
+            specialToastAudio: null,
+            specialToastEnabled: false,
+            audioActivated: false,
+            speechSynthesisSupported: false,
+            audioInitialized: false,
+            globalClickListenerAdded: false,
+            mobileAudioActivated: false,
+            speechRetryCount: 0,
+            maxSpeechRetry: 3,
+            // 新增：顾老太太打乱状态
+            grandmaShuffleEnabled: false,
+            grandmaShuffleMode: 'full',
+            // 新增：10086版本特殊功能
+            correctCountInSpecialVersion: 0,
+            consecutiveCorrectCount: 0,
+            lastAnswerCorrect: false,
+            isRecovering: false,
+            specialToastTimeout: null,
+            specialToastActive: false,
+            // 新增：双方案语音播放状态
+            speechScheme: 'A' // 默认使用A方案（浏览器合成语音）
+        };
+
+        // 初始化
+        function init() {
+            loadUsersFromFirebase();
+            loadHistoryRecords();
+            loadWrongAnswers();
+            initAudioContext();
+            initPoliceLight();
+            initBackgroundMusic();
+            // 添加特殊管理员账号
+            addSpecialAdmin();
+            // 恢复保存的登录信息
+            restoreSavedCredentials();
+            // 检测语音合成支持
+            checkSpeechSynthesisSupport();
+            // 初始化语音方案设置
+            initSpeechScheme();
+            // 添加全局点击监听器
+            addGlobalClickListener();
+        }
+
+        // 从Firebase加载用户数据
+        async function loadUsersFromFirebase() {
+            try {
+                const usersSnapshot = await db.collection('users').get();
+                AppState.users = usersSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                AppState.totalUsers = [...AppState.users];
+                updateAdminStats();
+            } catch (error) {
+                console.error('加载用户数据失败:', error);
+                // 如果Firebase加载失败，回退到localStorage
+                loadUsersFromLocalStorage();
+            }
+        }
+
+        // 保存用户数据到Firebase
+        async function saveUsersToFirebase() {
+            try {
+                for (const user of AppState.users) {
+                    if (user.id) {
+                        await db.collection('users').doc(user.id).set(user);
+                    } else {
+                        const docRef = await db.collection('users').add(user);
+                        user.id = docRef.id;
+                    }
+                }
+            } catch (error) {
+                console.error('保存用户数据失败:', error);
+                // 如果Firebase保存失败，回退到localStorage
+                saveUsersToLocalStorage();
+            }
+        }
+
+        // 从localStorage加载用户数据（备用方案）
+        function loadUsersFromLocalStorage() {
+            const savedUsers = localStorage.getItem('users');
+            if (savedUsers) {
+                AppState.users = JSON.parse(savedUsers);
+                AppState.totalUsers = [...AppState.users];
+            }
+        }
+
+        // 保存用户数据到localStorage（备用方案）
+        function saveUsersToLocalStorage() {
+            localStorage.setItem('users', JSON.stringify(AppState.users));
+        }
+
+        // 处理认证
+        async function handleAuth(event) {
+            event.preventDefault();
+            
+            const account = document.getElementById('authAccount').value;
+            const password = document.getElementById('authPassword').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+            
+            if (AppState.authMode === 'login') {
+                // 登录逻辑
+                const user = AppState.users.find(u => u.account === account && u.password === password);
+                
+                if (user) {
+                    // 检查用户是否被封号
+                    if (user.banned === true) {
+                        showBannedModal();
+                        return;
+                    }
+                    
+                    AppState.currentUser = user;
+                    user.lastLogin = new Date().toISOString();
+                    await saveUsersToFirebase();
+                    
+                    // 保存登录信息
+                    saveCredentials(account, password, rememberMe);
+                    
+                    // 检查是否是特殊管理员
+                    if (account === AppState.specialAdminAccount && password === AppState.specialAdminPassword) {
+                        AppState.isSpecialAdmin = true;
+                        // 特殊管理员登录后关闭警灯效果，设置粉红渐变背景
+                        AppState.policeLightEnabled = false;
+                        document.body.style.animationPlayState = 'paused';
+                        document.body.classList.add('special-admin');
+                    } else {
+                        AppState.isSpecialAdmin = false;
+                        // 普通用户保持警灯效果
+                        AppState.policeLightEnabled = true;
+                        document.body.style.animationPlayState = 'running';
+                        document.body.classList.remove('special-admin');
+                    }
+                    
+                    showMainPage();
+                    // 根据用户设置播放背景音乐
+                    if (user.bgMusicEnabled) {
+                        playBackgroundMusic();
+                    } else if (AppState.bgMusic) {
+                        AppState.bgMusic.pause();
+                    }
+                } else {
+                    alert('账号或密码错误');
+                }
+            } else {
+                // 注册逻辑
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                const username = document.getElementById('username').value;
+                
+                if (password !== confirmPassword) {
+                    alert('两次输入的密码不一致');
+                    return;
+                }
+                
+                if (AppState.users.find(u => u.account === account)) {
+                    alert('该账号已被注册');
+                    return;
+                }
+                
+                const newUser = {
+                    username: username || account,
+                    account: account,
+                    password: password,
+                    registerTime: new Date().toISOString(),
+                    lastLogin: new Date().toISOString(),
+                    status: 'active',
+                    role: 0,  // 普通用户权限级别为0
+                    bgMusicEnabled: true  // 背景音乐默认开启
+                };
+                
+                AppState.users.push(newUser);
+                AppState.totalUsers = [...AppState.users];
+                await saveUsersToFirebase();
+                AppState.currentUser = newUser;
+                AppState.isSpecialAdmin = false;
+                
+                // 注册成功后，根据记住我选项保存登录信息
+                saveCredentials(account, password, rememberMe);
+                
+                // 普通用户注册后保持警灯效果
+                AppState.policeLightEnabled = true;
+                document.body.style.animationPlayState = 'running';
+                document.body.classList.remove('special-admin');
+                
+                showMainPage();
+                // 播放背景音乐
+                playBackgroundMusic();
+            }
+        }
+
+        // 添加特殊管理员账号
+        async function addSpecialAdmin() {
+            // 检查是否已存在特殊管理员账号
+            const existingSpecialAdmin = AppState.users.find(u => u.account === AppState.specialAdminAccount);
+            if (!existingSpecialAdmin) {
+                const specialAdmin = {
+                    username: '特殊管理员',
+                    account: AppState.specialAdminAccount,
+                    password: AppState.specialAdminPassword,
+                    registerTime: new Date().toISOString(),
+                    lastLogin: new Date().toISOString(),
+                    status: 'active',
+                    role: 2  // 特殊管理员权限级别为2
+                };
+                AppState.users.push(specialAdmin);
+                AppState.totalUsers = [...AppState.users];
+                await saveUsersToFirebase();
+            }
+        }
+
+        // 刷新用户数据
+        async function refreshUserData() {
+            await loadUsersFromFirebase();
+            AppState.currentPageIndex = 1;
+            updateAdminStats();
+            
+            // 显示刷新成功提示
+            const refreshBtn = document.querySelector('.refresh-btn');
+            if (refreshBtn) {
+                const originalText = refreshBtn.textContent;
+                refreshBtn.textContent = '刷新成功';
+                
+                setTimeout(() => {
+                    refreshBtn.textContent = originalText;
+                }, 1500);
+            }
+        }
+
+        // 更新后台统计数据
+        function updateAdminStats() {
+            document.getElementById('totalUsers').textContent = AppState.users.length;
+            
+            const today = new Date().toDateString();
+            const todayUsers = AppState.users.filter(u => 
+                new Date(u.registerTime).toDateString() === today
+            ).length;
+            document.getElementById('todayUsers').textContent = todayUsers;
+            
+            const activeUsers = AppState.users.filter(u => 
+                new Date(u.lastLogin).toDateString() === today
+            ).length;
+            document.getElementById('activeUsers').textContent = activeUsers;
+            
+            const inactiveUsers = AppState.users.filter(u => 
+                new Date(u.lastLogin).toDateString() !== today
+            ).length;
+            document.getElementById('inactiveUsers').textContent = inactiveUsers;
+            
+            // 更新用户表格和卡片
+            updateUserDisplay();
+            
+            // 更新最后刷新时间
+            const now = new Date();
+            document.getElementById('lastUpdateTime').textContent = 
+                `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+        }
+
+        // 其他原有函数...
+
+        // DOM加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 先执行原始的初始化
+            init();
+            
+            // 更新背书统计数据
+            updateReciteStats();
+            
+            // 只有在非登录注册页面并且用户已登录时，才恢复语音状态
+            if (AppState.currentPage !== 'auth' && AppState.currentUser) {
+                // 恢复语音状态
+            }
+        });
+    </script>
+</body>
+</html>
