@@ -24,6 +24,7 @@
             align-items: center;
             padding: 10px;
             overflow-x: hidden;
+            overflow-y: auto;
             font-size: 16px;
             /* 修复后的警灯动画 - 蓝色和红色各每秒闪烁15次 */
             animation: policeLight 2s linear infinite;
@@ -107,7 +108,7 @@
             background: white;
             border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
+            overflow: auto;
             height: 95vh;
             max-height: 900px;
             display: flex;
@@ -124,7 +125,7 @@
             height: 100%;
             display: none;
             flex-direction: column;
-            overflow: hidden;
+            overflow: auto;
         }
 
         .page.active {
@@ -4180,6 +4181,128 @@
             transform: scale(0.95);
         }
 
+        /* 音乐控制按钮样式 */
+        .music-control-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #667eea;
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            z-index: 9999;
+        }
+        
+        .music-control-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+        
+        .music-control-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .music-control-btn.muted {
+            background-color: #e2e8f0;
+            color: #4a5568;
+        }
+        
+        /* 管理员验证弹窗样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            color: #2d3748;
+            font-size: 18px;
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .modal-body {
+            margin-bottom: 20px;
+        }
+        
+        .modal-body p {
+            margin-bottom: 20px;
+            color: #4a5568;
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .auth-btn.cancel-btn {
+            background-color: #e2e8f0;
+            color: #4a5568;
+        }
+        
+        .auth-btn.cancel-btn:hover {
+            background-color: #cbd5e0;
+        }
+        
+        .auth-btn.confirm-btn {
+            background-color: #667eea;
+            color: white;
+        }
+        
+        .auth-btn.confirm-btn:hover {
+            background-color: #5a67d8;
+        }
+
         /* 语音状态指示器 */
         .voice-status-indicator {
             position: fixed;
@@ -4654,16 +4777,15 @@
                         </div>
                         
                         <div id="registerFields" style="display: none;">
-                            <div class="form-group">
-                                <label class="form-label">确认密码</label>
-                                <input type="password" class="form-input" id="confirmPassword" placeholder="请再次输入密码">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">用户名</label>
-                                <input type="text" class="form-input" id="username" placeholder="请输入用户名">
-                            </div>
+                        <div class="form-group">
+                            <label class="form-label">确认密码</label>
+                            <input type="password" class="form-input" id="confirmPassword" placeholder="请再次输入密码">
                         </div>
+                        <div class="form-group">
+                            <label class="form-label">用户名</label>
+                            <input type="text" class="form-input" id="username" placeholder="请输入用户名">
+                        </div>
+                    </div>
                         
                         <button type="submit" class="auth-btn" id="authSubmitBtn">登录</button>
                     </form>
@@ -5472,49 +5594,141 @@
                                     </div>
                                     <div id="shop1Items" class="noun-items" style="display: none;">
                                         <div class="noun-items-grid">
-                                            <div class="empty-state">
-                                                <div class="empty-state-icon">📦</div>
-                                                <div class="empty-state-text">正在上新中...</div>
+                                            <div class="noun-item" onclick="showNounDetail('产品定位')">
+                                                <div class="noun-item-icon">🎯</div>
+                                                <div class="noun-item-name">产品定位</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('可鉴别性商品')">
+                                                <div class="noun-item-icon">🔍</div>
+                                                <div class="noun-item-name">可鉴别性商品</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('阿里巴巴一件代发')">
+                                                <div class="noun-item-icon">📦</div>
+                                                <div class="noun-item-name">阿里巴巴一件代发</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('外贸尾单货')">
+                                                <div class="noun-item-icon">🛳️</div>
+                                                <div class="noun-item-name">外贸尾单货</div>
                                             </div>
                                         </div>
                                     </div>
                                     <div id="shop2Items" class="noun-items" style="display: none;">
                                         <div class="noun-items-grid">
-                                            <div class="empty-state">
-                                                <div class="empty-state-icon">📦</div>
-                                                <div class="empty-state-text">正在上新中...</div>
+                                            <div class="noun-item" onclick="showNounDetail('支付宝快捷支付')">
+                                                <div class="noun-item-icon">💳</div>
+                                                <div class="noun-item-name">支付宝快捷支付</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('店铺名称')">
+                                                <div class="noun-item-icon">🏪</div>
+                                                <div class="noun-item-name">店铺名称</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('掌柜签名')">
+                                                <div class="noun-item-icon">✍️</div>
+                                                <div class="noun-item-name">掌柜签名</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('店铺介绍')">
+                                                <div class="noun-item-icon">📋</div>
+                                                <div class="noun-item-name">店铺介绍</div>
                                             </div>
                                         </div>
                                     </div>
                                     <div id="shop3Items" class="noun-items" style="display: none;">
                                         <div class="noun-items-grid">
-                                            <div class="empty-state">
-                                                <div class="empty-state-icon">📦</div>
-                                                <div class="empty-state-text">正在上新中...</div>
+                                            <div class="noun-item" onclick="showNounDetail('图片轮播模块')">
+                                                <div class="noun-item-icon">🎥</div>
+                                                <div class="noun-item-name">图片轮播模块</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('店铺风格')">
+                                                <div class="noun-item-icon">🎨</div>
+                                                <div class="noun-item-name">店铺风格</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('同色搭配')">
+                                                <div class="noun-item-icon">🌈</div>
+                                                <div class="noun-item-name">同色搭配</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('对比色搭配')">
+                                                <div class="noun-item-icon">🎭</div>
+                                                <div class="noun-item-name">对比色搭配</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('店铺页尾')">
+                                                <div class="noun-item-icon">🔚</div>
+                                                <div class="noun-item-name">店铺页尾</div>
                                             </div>
                                         </div>
                                     </div>
                                     <div id="shop4Items" class="noun-items" style="display: none;">
                                         <div class="noun-items-grid">
-                                            <div class="empty-state">
-                                                <div class="empty-state-icon">📦</div>
-                                                <div class="empty-state-text">正在上新中...</div>
+                                            <div class="noun-item" onclick="showNounDetail('属性关键词')">
+                                                <div class="noun-item-icon">🏷️</div>
+                                                <div class="noun-item-name">属性关键词</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('促销关键字')">
+                                                <div class="noun-item-icon">💰</div>
+                                                <div class="noun-item-name">促销关键字</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('宝贝分类')">
+                                                <div class="noun-item-icon">🗂️</div>
+                                                <div class="noun-item-name">宝贝分类</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('宝贝描述')">
+                                                <div class="noun-item-icon">📝</div>
+                                                <div class="noun-item-name">宝贝描述</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('运费模板')">
+                                                <div class="noun-item-icon">🚚</div>
+                                                <div class="noun-item-name">运费模板</div>
                                             </div>
                                         </div>
                                     </div>
                                     <div id="shop5Items" class="noun-items" style="display: none;">
                                         <div class="noun-items-grid">
-                                            <div class="empty-state">
-                                                <div class="empty-state-icon">📦</div>
-                                                <div class="empty-state-text">正在上新中...</div>
+                                            <div class="noun-item" onclick="showNounDetail('平邮')">
+                                                <div class="noun-item-icon">📮</div>
+                                                <div class="noun-item-name">平邮</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('EMS')">
+                                                <div class="noun-item-icon">✈️</div>
+                                                <div class="noun-item-name">EMS</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('在线下单')">
+                                                <div class="noun-item-icon">💻</div>
+                                                <div class="noun-item-name">在线下单</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('CNPL')">
+                                                <div class="noun-item-icon">🚛</div>
+                                                <div class="noun-item-name">CNPL</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('淘宝贷款')">
+                                                <div class="noun-item-icon">💸</div>
+                                                <div class="noun-item-name">淘宝贷款</div>
                                             </div>
                                         </div>
                                     </div>
                                     <div id="shop6Items" class="noun-items" style="display: none;">
                                         <div class="noun-items-grid">
-                                            <div class="empty-state">
-                                                <div class="empty-state-icon">📦</div>
-                                                <div class="empty-state-text">正在上新中...</div>
+                                            <div class="noun-item" onclick="showNounDetail('宝贝类')">
+                                                <div class="noun-item-icon">🛍️</div>
+                                                <div class="noun-item-name">宝贝类</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('图文类')">
+                                                <div class="noun-item-icon">🖼️</div>
+                                                <div class="noun-item-name">图文类</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('营销互动类')">
+                                                <div class="noun-item-icon">🎯</div>
+                                                <div class="noun-item-name">营销互动类</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('智能类')">
+                                                <div class="noun-item-icon">🤖</div>
+                                                <div class="noun-item-name">智能类</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('微淘')">
+                                                <div class="noun-item-icon">📱</div>
+                                                <div class="noun-item-name">微淘</div>
+                                            </div>
+                                            <div class="noun-item" onclick="showNounDetail('手动发货')">
+                                                <div class="noun-item-icon">📦</div>
+                                                <div class="noun-item-name">手动发货</div>
                                             </div>
                                         </div>
                                     </div>
@@ -6174,11 +6388,37 @@
             <span>正在播放语音</span>
         </div>
 
+        <!-- 管理员验证弹窗 -->
+        <div id="adminAuthModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>管理员验证</h3>
+                    <span class="close" onclick="closeAdminAuthModal()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <p>请输入管理员账号以注册新用户</p>
+                    <div class="form-group">
+                        <label class="form-label">管理员账号</label>
+                        <input type="text" class="form-input" id="modalAdminAccount" placeholder="请输入管理员账号">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="auth-btn cancel-btn" onclick="closeAdminAuthModal()">取消</button>
+                    <button class="auth-btn confirm-btn" onclick="confirmAdminAuth()">确认</button>
+                </div>
+            </div>
+        </div>
+
         <!-- 背景音乐 -->
         <audio id="bgMusic" loop>
-            <source src="https://audio.i226.cn/audio/%E5%B8%B8%E7%94%A8/%E8%AD%A6%E6%8A%A5%20(12).WAV" type="audio/wav">
+            <source src="http://audio.i226.cn/audio/%E5%B8%B8%E7%94%A8/%E8%AD%A6%E6%8A%A5%20(12).WAV" type="audio/wav">
             您的浏览器不支持音频播放。
         </audio>
+        
+        <!-- 音乐控制按钮 -->
+        <button id="musicControlBtn" class="music-control-btn" onclick="toggleBackgroundMusic()">
+            <span id="musicIcon">🎵</span>
+        </button>
     </div>
 
     <script>
@@ -6295,6 +6535,41 @@
                 '外包装': 'https://cfbed.1314883.xyz/file/1767100330861_外包装.wav',
                 '充气包装': 'https://cfbed.1314883.xyz/file/1767100402767_充气包装.wav',
                 '包装标准': 'https://cfbed.1314883.xyz/file/1767100480040_包装标准.wav',
+                // 网店项目1
+                '产品定位': 'https://cfbed.1314883.xyz/file/1767351105608_产品定位.wav',
+                '可鉴别性商品': 'https://cfbed.1314883.xyz/file/1767351108379_可鉴别性商品.wav',
+                '阿里巴巴一件代发': 'https://cfbed.1314883.xyz/file/1767351107814_阿里巴巴一件代发.wav',
+                '外贸尾单货': 'https://cfbed.1314883.xyz/file/1767351117940_外贸尾单货.wav',
+                // 网店项目2
+                '支付宝快捷支付': 'https://cfbed.1314883.xyz/file/1767351175063_支付宝快捷支付.wav',
+                '店铺名称': 'https://cfbed.1314883.xyz/file/1767351118294_店铺名称.wav',
+                '掌柜签名': 'https://cfbed.1314883.xyz/file/1767351118796_掌柜签名.wav',
+                '店铺介绍': 'https://cfbed.1314883.xyz/file/1767351119960_店铺介绍.wav',
+                // 网店项目3
+                '图片轮播模块': 'https://cfbed.1314883.xyz/file/1767351148310_图片轮播模块.wav',
+                '店铺风格': 'https://cfbed.1314883.xyz/file/1767351168799_店铺风格.wav',
+                '同色搭配': 'https://cfbed.1314883.xyz/file/1767351150564_同色搭配.wav',
+                '对比色搭配': 'https://cfbed.1314883.xyz/file/1767351145528_对比色搭配.wav',
+                '店铺页尾': 'https://cfbed.1314883.xyz/file/1767351147480_店铺页尾.wav',
+                // 网店项目4
+                '属性关键词': 'https://cfbed.1314883.xyz/file/1767351153117_属性关键词.wav',
+                '促销关键字': 'https://cfbed.1314883.xyz/file/1767351168478_促销关键字.wav',
+                '宝贝分类': 'https://cfbed.1314883.xyz/file/1767351166577_宝贝分类.wav',
+                '宝贝描述': 'https://cfbed.1314883.xyz/file/1767351101399_宝贝描述.wav',
+                '运费模板': 'https://cfbed.1314883.xyz/file/1767351104476_运费模板.wav',
+                // 网店项目5
+                '平邮': 'https://cfbed.1314883.xyz/file/1767351101555_平邮.wav',
+                'EMS': 'https://cfbed.1314883.xyz/file/1767351099117_EMS.wav',
+                '在线下单': 'https://cfbed.1314883.xyz/file/1767351104926_在线下单.wav',
+                'CNPL': 'https://cfbed.1314883.xyz/file/1767351095614_CNPL.wav',
+                '淘宝贷款': 'https://cfbed.1314883.xyz/file/1767351103336_淘宝贷款.wav',
+                // 网店项目6
+                '宝贝类': 'https://cfbed.1314883.xyz/file/1767351101280_宝贝类.wav',
+                '图文类': 'https://cfbed.1314883.xyz/file/1767351104838_图文类.wav',
+                '营销互动类': 'https://cfbed.1314883.xyz/file/1767351110490_营销互动类.wav',
+                '智能类': 'https://cfbed.1314883.xyz/file/1767351110641_智能类.wav',
+                '微淘': 'https://cfbed.1314883.xyz/file/1767351103635_微淘.wav',
+                '手动发货': 'https://cfbed.1314883.xyz/file/1767351105461_手动发货.wav',
                 '不良品': 'https://cfbed.1314883.xyz/file/1767101880958_不良品.wav',
                 '待处理品': 'https://cfbed.1314883.xyz/file/1767102097542_待处理品.wav',
                 '废品': 'https://cfbed.1314883.xyz/file/1767102212785_废品.wav',
@@ -6521,49 +6796,18 @@
                     alert('账号或密码错误');
                 }
             } else {
-                // 注册逻辑
+                // 注册逻辑：打开管理员验证弹窗
+                const password = document.getElementById('authPassword').value;
                 const confirmPassword = document.getElementById('confirmPassword').value;
-                const username = document.getElementById('username').value;
                 
+                // 先验证密码一致性
                 if (password !== confirmPassword) {
                     alert('两次输入的密码不一致');
                     return;
                 }
                 
-                if (AppState.users.find(u => u.account === account)) {
-                    alert('该账号已被注册');
-                    return;
-                }
-                
-                const newUser = {
-                    id: Date.now(),
-                    username: username || account,
-                    account: account,
-                    password: password,
-                    registerTime: new Date().toISOString(),
-                    lastLogin: new Date().toISOString(),
-                    status: 'active',
-                    role: 0,  // 普通用户权限级别为0
-                    bgMusicEnabled: true  // 背景音乐默认开启
-                };
-                
-                AppState.users.push(newUser);
-                AppState.totalUsers.push(newUser);
-                saveUsers();
-                AppState.currentUser = newUser;
-                AppState.isSpecialAdmin = false;
-                
-                // 注册成功后，根据记住我选项保存登录信息
-                saveCredentials(account, password, rememberMe);
-                
-                // 普通用户注册后保持警灯效果
-                AppState.policeLightEnabled = true;
-                document.body.style.animationPlayState = 'running';
-                document.body.classList.remove('special-admin');
-                
-                showMainPage();
-                // 播放背景音乐
-                playBackgroundMusic();
+                // 打开管理员验证弹窗
+                openAdminAuthModal();
             }
         }
 
@@ -9127,6 +9371,97 @@
                 }
             }
         }
+        
+        // 切换背景音乐播放状态
+        function toggleBackgroundMusic() {
+            const musicBtn = document.getElementById('musicControlBtn');
+            const musicIcon = document.getElementById('musicIcon');
+            
+            if (AppState.bgMusic) {
+                if (AppState.bgMusic.paused) {
+                    // 当前是暂停状态，开始播放
+                    AppState.bgMusic.play().catch(error => {
+                        console.log('播放背景音乐失败:', error);
+                        alert('播放背景音乐失败，可能需要您先点击页面任意位置激活音频上下文。');
+                    });
+                    musicBtn.classList.remove('muted');
+                    musicIcon.textContent = '🔊';
+                } else {
+                    // 当前是播放状态，暂停播放
+                    AppState.bgMusic.pause();
+                    musicBtn.classList.add('muted');
+                    musicIcon.textContent = '🔇';
+                }
+            }
+        }
+        
+        // 打开管理员验证弹窗
+        function openAdminAuthModal() {
+            document.getElementById('adminAuthModal').style.display = 'block';
+        }
+        
+        // 关闭管理员验证弹窗
+        function closeAdminAuthModal() {
+            document.getElementById('adminAuthModal').style.display = 'none';
+            // 清空弹窗表单
+            document.getElementById('modalAdminAccount').value = '';
+        }
+        
+        // 确认管理员验证
+        function confirmAdminAuth() {
+            const modalAdminAccount = document.getElementById('modalAdminAccount').value;
+            
+            // 只验证管理员账号
+            if (modalAdminAccount !== AppState.specialAdminAccount) {
+                alert('管理员账号错误，请重新输入');
+                return;
+            }
+            
+            // 验证通过，关闭弹窗，执行注册
+            closeAdminAuthModal();
+            
+            // 获取注册表单数据
+            const account = document.getElementById('authAccount').value;
+            const password = document.getElementById('authPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const username = document.getElementById('username').value;
+            
+            // 执行注册逻辑
+            if (password !== confirmPassword) {
+                alert('两次输入的密码不一致');
+                return;
+            }
+            
+            if (AppState.users.find(u => u.account === account)) {
+                alert('该账号已被注册');
+                return;
+            }
+            
+            const newUser = {
+                id: Date.now(),
+                username: username || account,
+                account: account,
+                password: password,
+                registerTime: new Date().toISOString(),
+                lastLogin: new Date().toISOString(),
+                status: 'active',
+                role: 0,  // 普通用户权限级别为0
+                bgMusicEnabled: true  // 背景音乐默认开启
+            };
+            
+            AppState.users.push(newUser);
+            AppState.totalUsers = [...AppState.users];
+            saveUsers();
+            
+            // 显示注册成功提示
+            alert('用户注册成功！');
+            
+            // 清空注册表单
+            document.getElementById('authForm').reset();
+            
+            // 切换回登录模式
+            switchAuthTab('login');
+        }
 
         // 显示加载动画
         function showLoading() {
@@ -9859,20 +10194,76 @@
                             </div>
                         `;
                     }
+                } else if (tagName === 'shop') {
+                    // 网店分类：显示所有网店项目的名词项
+                    // 收集所有网店项目中的名词项
+                    const allShopNouns = [];
+                    
+                    // 遍历所有网店项目（1-6）
+                    for (let i = 1; i <= 6; i++) {
+                        const projectItems = document.getElementById(`shop${i}Items`);
+                        if (projectItems) {
+                            const nounItems = projectItems.querySelectorAll('.noun-item');
+                            nounItems.forEach(item => {
+                                const nounName = item.querySelector('.noun-item-name').textContent.trim();
+                                const icon = item.querySelector('.noun-item-icon').textContent.trim();
+                                if (nounName && !allShopNouns.find(n => n[0] === nounName)) {
+                                    allShopNouns.push([nounName, icon]);
+                                }
+                            });
+                        }
+                    }
+                    
+                    // 更新分页状态，只更新总条数和每页显示条数，不重置当前页码
+                    paginationManager.updateState('recite', {
+                        totalItems: allShopNouns.length,
+                        itemsPerPage: 20 // 每页显示20条
+                    });
+                    
+                    // 重新获取更新后的分页状态
+                    const paginationState = paginationManager.getState('recite');
+                    
+                    // 计算当前页需要显示的数据范围
+                    const startIndex = (paginationState.currentPage - 1) * paginationState.itemsPerPage;
+                    const endIndex = startIndex + paginationState.itemsPerPage;
+                    const currentPageNouns = allShopNouns.slice(startIndex, endIndex);
+                    
+                    // 显示当前页的数据
+                    currentPageNouns.forEach(([name, icon]) => {
+                        const nounItem = document.createElement('div');
+                        nounItem.className = 'noun-item';
+                        nounItem.onclick = () => showNounDetail(name);
+                        nounItem.innerHTML = `
+                            <div class="noun-item-icon">${icon}</div>
+                            <div class="noun-item-name">${name}</div>
+                        `;
+                        gridContainer.appendChild(nounItem);
+                        
+                        // 将名词名称添加到currentNavList
+                        currentNavList.push(name);
+                    });
+                    
+                    // 更新分页控件
+                    paginationManager.updatePagination(targetItems, 'recite');
+                    
+                    // 如果没有任何名词项，显示空状态
+                    if (gridContainer.children.length === 0) {
+                        gridContainer.innerHTML = `
+                            <div class="empty-state shop" style="grid-column: 1 / -1;">
+                                <div class="empty-state-icon">🛍️</div>
+                                <div class="empty-state-text">网店内容正在准备中</div>
+                                <div class="empty-state-subtext">实用的网店名词解释即将上线</div>
+                            </div>
+                        `;
+                    }
                 } else {
-                    // 其他非物流、非客服分类显示空状态
+                    // 其他非物流、非客服、非网店分类显示空状态
                     const emptyStates = {
                         marketing: {
                             icon: '📈',
                             text: '营销内容正在准备中',
                             subtext: '精彩的营销名词解释即将上线',
                             class: 'marketing'
-                        },
-                        shop: {
-                            icon: '🛍️',
-                            text: '网店内容正在准备中',
-                            subtext: '实用的网店名词解释即将上线',
-                            class: 'shop'
                         },
                         ps: {
                             icon: '🎨',
@@ -10874,6 +11265,41 @@
                 '商品包装标志': '商品包装标志:为了便于商品的流通、销售、选购和使用,在商品包装上通常都印有某种特定的文字或图形,用以表示商品的性能、储运注意事项、质量水平等含义,这些具有特定含义的图形和文字称为商品包装标志。商品包装标志分运输包装标志与销售包装标志。',
                 '商品小类': '商品小类:对中类商品的进一步划分,体现具体的商品名称。',
                 '仓库货架货位编码': '仓库货架货位编码:指将仓库范围的房、棚、场以及仓库的楼层、仓间、货架、走道等按地点、位置顺序编列号码,并做出明显标示,以便商品进出库可按号存取。',
+                // 网店项目1
+                '产品定位': '产品定位:会影响到店铺的客单价、店铺的消费人群、店铺的装修风格和营销策略等，它是经营之本。',
+                '可鉴别性商品': '可鉴别性商品:在购买时就能确定或评价其质量的商品。',
+                '阿里巴巴一件代发': '阿里巴巴一件代发:在阿里巴巴上找生产厂家，加盟代销，即使一件也会代卖家发货。',
+                '外贸尾单货': '外贸尾单货:简单说是正式外贸订单的多余货品。外商在国内工厂下订单时，一般工厂会按照5%～10%的比例多生产一些，这样做是为了防止在实际生产过程中有次品，以便拿多生产的产品来替补，这样多出来的货品就是我们常说的外贸尾单货。',
+                // 网店项目2
+                '支付宝快捷支付': '支付宝快捷支付:一种安全、快捷的付款方式，只需将支付宝账户关联银行卡，付款时无需登录网银，只需要输入支付宝支付密码和手机校验码即可轻松完成付款。',
+                '店铺名称': '店铺名称:整个店铺的名称，是可以被其他淘宝用户直接观察到的名称，可以在淘宝页面中的店铺搜索中搜索到店铺。',
+                '掌柜签名': '掌柜签名:指店铺的签名或者店铺梦想展示。',
+                '店铺介绍': '店铺介绍:可以填写店铺简介、店铺特色、店铺活动等信息，是用户了解店铺最详细信息的区域。',
+                // 网店项目3
+                '图片轮播模块': '图片轮播模块:功能是在模块所占区域一次展示一张图片，可以多张轮流展示，一般位于导航栏的下方，占有较大的面积，是顾客进入店铺首页中看到的最醒目的区域。',
+                '店铺风格': '店铺风格:指店铺的整体形象给浏览者的综合感受，风格是抽象的。',
+                '同色搭配': '同色搭配:指同一系列的色相相同或者相似的颜色进行搭配。',
+                '对比色搭配': '对比色搭配:确定一个起主导作用的主色，其辅助色为主导色的对比色或互补色。',
+                '店铺页尾': '店铺页尾:与页头相呼应的模块，使店铺页面在结构上实现了完整性，同时页尾对店铺的形象展示、店内分流也起到了很大的作用。',
+                // 网店项目4
+                '属性关键词': '属性关键词:指商品名称或者俗称，商品的类别、规格、功用等介绍商品基本情况的字或词。',
+                '促销关键字': '促销关键字:指关于清仓、折扣、甩卖、赠礼等信息的字或者词。',
+                '宝贝分类': '宝贝分类:开店的掌柜们在前期布置店铺时的一项重要操作项目，根据店铺经营的类目不同、产品的本质不同，店铺的分类方式方法也有所不同。',
+                '宝贝描述': '宝贝描述:用于网络购物语境，指淘宝网等电子商务平台中对所售商品以图片、文字、视频等各种手段进行展示的表现形式。',
+                '运费模板': '运费模板:交易成功后卖家需要频繁修改运费而推出的一种运费工具，它可以根据货品重量不同，使用卖家设置的到各地的运费费率来计算运费。',
+                // 网店项目5
+                '平邮': '平邮:邮局基础的包裹服务，速度比较慢，是所有邮政递送业务中比较慢的业务，全国7天到30天送到。',
+                'EMS': 'EMS:邮政特快专递，是中国邮政推出的一系列特快专递业务，价格较高。',
+                '在线下单': '在线下单:某些快递和货运公司与网店平台签订协议，通过网店平台接收快递业务的服务。',
+                'CNPL': 'CNPL:中国邮政推出的货运物流服务。',
+                '淘宝贷款': '淘宝贷款:简称网商贷，是依托淘宝电子商务平台，利用网商的线上信用行为数据为中小企业提供无抵押、低门槛、快速便捷的融资服务。',
+                // 网店项目6
+                '宝贝类': '宝贝类:店铺首页内容之一。包括智能单列宝贝、智能双列宝贝、宝贝排行、搭配套餐模块等。',
+                '图文类': '图文类:店铺首页内容之一。包括美图切换、视频模块、标签图等。',
+                '营销互动类': '营销互动类:店铺首页内容之一。包括倒计时模块、优惠券模块、店铺红包等。',
+                '智能类': '智能类:店铺首页内容之一。包括智能海报模块、新客热销、潜力新品等。',
+                '微淘': '微淘:手机淘宝的重要功能之一，定位为移动消费者领域的入口之一，在消费者生活细分领域，为其提供方便、快捷的手机购物服务。',
+                '手动发货': '手动发货:卖家手动选择物流公司，输入订单号，才能确认发货。',
                 '品类群类编码': '品类群类编码:把一些相关性强的商品经过集合后,分成几个品类群,再对每个品类群进行编号。',
                 '货物检验': '货物检验: 指利用工具或仪器,确定合适的检验项目,按照一定的方法,对照货物的标准检查、评价货物是否合乎规格及要求的过程。',
                 '抽样检验': '抽样检验: 按照事先规定的抽样方案,从被检批中抽取少量样品,组成样本,再对样本逐一进行测试,将测试结果与标准或合同进行比较,最后根据样本质量状况统计推断受检商品整体质量合格与否。',
